@@ -1,14 +1,14 @@
 {
-	"name": "app-name",
+	"name": "angle-estimator",
 	"productName": "Angle Estimator",
 	"version": "0.0.0",
 	"description": "The best app ever",
 	"license": "MIT",
 	"repository": "sindresorhus/electron-boilerplate",
 	"author": {
-		"name": "Your Name",
-		"email": "user@gmail.com",
-		"url": "https://sindresorhus.com"
+		"name": "Dody Dharma",
+		"email": "dody.dharma@gmail.com",
+		"url": "https://dodydharma.com"
 	},
 	"scripts": {
 		"postinstall": "electron-builder install-app-deps",
