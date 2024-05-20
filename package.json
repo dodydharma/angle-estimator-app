@@ -28,9 +28,11 @@
 		"electron-util": "^0.17.2"
 	},
 	"devDependencies": {
-		"electron": "^13.0.0",
-		"electron-builder": "^23.3.3",
-		"np": "^7.6.2",
+		"electron": "^30.0.6",
+		"electron-builder": "^24.13.3",
+		"eslint": "^8.57.0",
+		"eslint-plugin-unicorn": "^53.0.0",
+		"np": "^10.0.5",
 		"xo": "^0.51.0"
 	},
 	"xo": {
