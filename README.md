@@ -1,2 +1,2 @@
 # Angle-Estimator-App
- Cross Platform Angle Estimator with Electron
+ Cross Platform Desktop Application -  Angle Estimator - built with Electron

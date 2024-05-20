@@ -1,10 +1,10 @@
 {
 	"name": "angle-estimator",
 	"productName": "Angle Estimator",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"description": "The best app ever",
 	"license": "MIT",
-	"repository": "dodydharma/Angle-Estimator-App",
+	"repository": "dodydharma/angle-estimator-app",
 	"author": {
 		"name": "Dody Dharma",
 		"email": "dody.dharma@gmail.com",
@@ -49,9 +49,9 @@
 		"releaseDraft": false
 	},
 	"build": {
-		"appId": "com.company.AppName",
+		"appId": "com.dodydharma.angle-estimator-app",
 		"mac": {
-			"category": "public.app-category.social-networking",
+			"category": "public.app-category.utilities",
 			"darkModeSupport": true
 		},
 		"dmg": {
