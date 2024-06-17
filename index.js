@@ -1,16 +1,16 @@
 'use strict';
 const path = require('path');
-const {app, BrowserWindow, Menu} = require('electron');
+const {app, BrowserWindow, Menu, ipcMain } = require('electron/main');
 /// const {autoUpdater} = require('electron-updater');
 const {is} = require('electron-util');
 const unhandled = require('electron-unhandled');
 const debug = require('electron-debug');
 const contextMenu = require('electron-context-menu');
 const config = require('./config.js');
-const menu = require('./menu.js');
+const menu = require('./js/menu.js');
 
 unhandled();
-debug();
+// debug();
 contextMenu();
 
 // Note: Must match `build.appId` in package.json
@@ -34,8 +34,11 @@ const createMainWindow = async () => {
 	const window_ = new BrowserWindow({
 		title: app.name,
 		show: false,
-		width: 800,
-		height: 600,
+		width: 1280,
+		height: 960,
+		webPreferences: {
+			preload: path.join(__dirname, 'js/preload.js')
+		}
 	});
 
 	window_.on('ready-to-show', () => {
@@ -83,8 +86,11 @@ app.on('activate', async () => {
 (async () => {
 	await app.whenReady();
 	Menu.setApplicationMenu(menu);
+
+	ipcMain.handle('ping', () => 'pong')
+
 	mainWindow = await createMainWindow();
 
-	const favoriteAnimal = config.get('favoriteAnimal');
-	mainWindow.webContents.executeJavaScript(`document.querySelector('header p').textContent = 'Your favorite animal is ${favoriteAnimal}'`);
+	// const favoriteAnimal = config.get('favoriteAnimal');
+	// mainWindow.webContents.executeJavaScript(`document.querySelector('header p').textContent = 'Your favorite animal is ${favoriteAnimal}'`);
 })();
