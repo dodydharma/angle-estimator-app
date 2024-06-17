@@ -11,7 +11,7 @@ const menu = require('./js/menu.js');
 
 unhandled();
 // debug();
-contextMenu();
+// contextMenu();
 
 // Note: Must match `build.appId` in package.json
 app.setAppUserModelId('com.dodydharma.AngleEstimatorApp');
@@ -85,8 +85,8 @@ app.on('activate', async () => {
 
 (async () => {
 	await app.whenReady();
-	Menu.setApplicationMenu(menu);
 
+	Menu.setApplicationMenu(menu);
 	ipcMain.handle('ping', () => 'pong')
 
 	mainWindow = await createMainWindow();
