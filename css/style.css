@@ -17,6 +17,53 @@ html {
   line-height: 1.4;
 }
 
+
+body {
+	padding: 0;
+	margin: 0;
+	background: transparent;
+}
+
+/* Use OS default fonts */
+body {
+	font-family:
+		system-ui,
+		-apple-system,
+		'Segoe UI',
+		Roboto,
+		Helvetica,
+		Arial,
+		sans-serif,
+		'Apple Color Emoji',
+		'Segoe UI Emoji';
+	text-rendering: optimizeLegibility;
+	font-feature-settings: 'liga', 'clig', 'kern';
+}
+
+header {
+	position: fixed;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 100px;
+	background-color: lightgrey;
+	text-align: left;
+	z-index: 1;
+
+}
+
+header h1 {
+	font-size: 60px;
+	font-weight: 200;
+	margin: 0;
+	padding: 0;
+	opacity: 0.7;
+}
+
+#container{
+	z-index: 0;
+}
+
 /*
  * Remove text-shadow in selection highlight:
  * https://twitter.com/miketaylr/status/12228805301
@@ -247,14 +294,16 @@ textarea {
 
 /* Custom CSS*/
 #preview {
-  position: absolute;
+  position: fixed;
   top: 100px;
-  left: 100px;
-  border: 0px solid grey;
+  left: 400px;
+  border: 1px solid grey;
+	z-index: 2;
 }
 
+
 #custom-handle {
-  width: 8em;
+  width: 10em;
   height: 1.6em;
   top: 50%;
   margin-top: -.8em;
@@ -265,7 +314,7 @@ textarea {
 
 #slider{
   margin: 10px;
-  width: 200px;
+  width: 300px;
 }
 
 .picker {
@@ -292,7 +341,7 @@ textarea {
 #buttons {
   position: absolute;
   top: 5px;
-  left: 300px;
+  left: 250px;
 }
 
 #buttons > input {
@@ -304,10 +353,10 @@ textarea {
 #buttons2 {
   position: absolute;
   top: 5px;
-  left: 450px;
+  left: 375px;
 }
 #buttons3 {
   position: absolute;
   top: 5px;
-  left: 530px;
+  left: 625px;
 }

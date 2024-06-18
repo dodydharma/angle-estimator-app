@@ -41,11 +41,16 @@ let mouseCurrentPosition
 // Help Protocol information Dialog
 $( "#protocolA" ).dialog({width : 600});
 {$( "#protocolA" ).dialog( "close" );}
-$( "#showProtocolA" ).on( "click", function(event) {$( "#protocolA" ).dialog( "open" );event.preventDefault();});
+$( "#showProtocolA" ).on( "click", function(event) {
+	$( "#protocolA" ).dialog( "open" )
+	event.preventDefault();
+});
 
 $( "#protocolB" ).dialog({width : 600});
 {$( "#protocolB" ).dialog( "close" );}
-$( "#showProtocolB" ).on( "click", function(event) {$( "#protocolB" ).dialog( "open" );event.preventDefault();});
+$( "#showProtocolB" ).on( "click", function(event) {
+	$( "#protocolB" ).dialog( "open" );event.preventDefault();
+});
 
 
 // Check the draw mode line,circle, or point
@@ -98,8 +103,8 @@ function activateUndo(){
 
 // listen for the file input change event and load the image.
 let URL = window.webkitURL || window.URL;
-// let url = 'https://raw.githubusercontent.com/dodydharma/angle-estimator/main/img/plain.jpg';
 let url = 'images/plain.jpg';
+// let url = 'images/NO08F52A.JPG';
 $("#file_input").change(function(e){
 	url = URL.createObjectURL(e.target.files[0]);
 	initialize();
@@ -107,20 +112,21 @@ $("#file_input").change(function(e){
 
 
 // adjust  image view resolution
-let imageViewResolution = 800
+let imageViewResolution = 3000
 var handle = $( "#custom-handle" );
 $( "#slider" ).slider({
 	create: function() {
-		handle.text( "view resolution");
+		handle.text( 'view max '+imageViewResolution+' px' );
 	},
 	slide: function( event, ui ) {
 		imageViewResolution = ui.value
-		handle.text( imageViewResolution+' px' );
+		handle.text( 'view max '+imageViewResolution+' px' );
 		if (url)
 			initialize()
 	},
-	min: 800,
-	max: 3000,
+	min: 500,
+	value:imageViewResolution,
+	max: 5000,
 });
 
 
@@ -283,8 +289,8 @@ function initialize(){
 		// now load the main working image into Konva
 		var workingImage = new Konva.Image({
 			image: img,
-			x: 5,
-			y: 5,
+			x: 0,
+			y: 0,
 			width: img_width / ratio,
 			height: img_height / ratio,
 			draggable: false,
@@ -313,8 +319,9 @@ function initialize(){
 
 		// create smaller preview stage
 		var zoomScale = 5
-		var previewWidth = window.innerWidth / 3
-		var previewHeight = window.innerHeight / 3
+		maxZoomWidth = 300
+		var previewWidth =  math.max(window.innerWidth / 3, maxZoomWidth)
+		var previewHeight = math.max(window.innerHeight / 3, maxZoomWidth)
 		const previewStage = new Konva.Stage({
 			container: 'preview',
 			width: previewWidth,
@@ -352,7 +359,7 @@ function initialize(){
 			// Enable Dragging
 			$( "#preview" ).draggable();
 			// Enable following  mouse vertical position
-			$( "#preview" ).css({left: window.innerWidth-window.innerWidth/3})
+			$( "#preview" ).css({left: window.innerWidth-(window.innerWidth/3 +3)})
 
 			var timeout;
 			$( "#container").mousemove(function(event) {
@@ -367,6 +374,13 @@ function initialize(){
 				//         event.pageY-previewHeight
 				//   })}, 100);
 
+			});
+
+			$(window).resize(function()
+			{
+				setTimeout(function() {
+					$( "#preview" ).css({left: window.innerWidth-(window.innerWidth/3 +3)})
+				}, 100);
 			});
 
 		});

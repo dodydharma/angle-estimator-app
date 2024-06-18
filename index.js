@@ -34,7 +34,7 @@ const createMainWindow = async () => {
 	const window_ = new BrowserWindow({
 		title: app.name,
 		show: false,
-		width: 1280,
+		width: 1500,
 		height: 960,
 		webPreferences: {
 			preload: path.join(__dirname, 'js/preload.js')
@@ -42,6 +42,7 @@ const createMainWindow = async () => {
 	});
 
 	window_.on('ready-to-show', () => {
+		window_.maximize();
 		window_.show();
 	});
 
