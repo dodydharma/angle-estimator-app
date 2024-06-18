@@ -2,7 +2,7 @@
   "name": "angle-estimator",
   "productName": "Angle Estimator",
   "version": "0.0.1",
-  "description": "The best app ever",
+  "description": "Lightweight Angle Estimator from line intersections",
   "main": "index.js",
   "license": "MIT",
   "repository": "dodydharma/angle-estimator-app",
@@ -40,6 +40,7 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.4.0",
     "@electron-forge/plugin-fuses": "^7.4.0",
     "@electron/fuses": "^1.8.0",
+    "@rabbitholesyndrome/electron-forge-maker-portable": "^0.2.0",
     "electron": "^30.0.6",
     "electron-winstaller": "^5.3.1",
     "eslint": "^8.57.0",
@@ -65,6 +66,15 @@
     "mac": {
       "category": "public.app-category.utilities",
       "darkModeSupport": true
+    },
+    "win": {
+      "publisherName": "Dody Dharma",
+      "publish": [
+        "github"
+      ],
+      "target": [
+        "nsis"
+      ]
     },
     "dmg": {
       "iconSize": 160,
