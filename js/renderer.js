@@ -320,8 +320,8 @@ function initialize(){
 		// create smaller preview stage
 		var zoomScale = 5
 		maxZoomWidth = 300
-		var previewWidth =  math.max(window.innerWidth / 3, maxZoomWidth)
-		var previewHeight = math.max(window.innerHeight / 3, maxZoomWidth)
+		var previewWidth =  math.min(window.innerWidth / 3, maxZoomWidth)
+		var previewHeight = math.min(window.innerHeight / 3, maxZoomWidth)
 		const previewStage = new Konva.Stage({
 			container: 'preview',
 			width: previewWidth,
@@ -359,7 +359,7 @@ function initialize(){
 			// Enable Dragging
 			$( "#preview" ).draggable();
 			// Enable following  mouse vertical position
-			$( "#preview" ).css({left: window.innerWidth-(window.innerWidth/3 +3)})
+			$( "#preview" ).css({left: window.innerWidth-(previewWidth+3)})
 
 			var timeout;
 			$( "#container").mousemove(function(event) {
@@ -379,7 +379,7 @@ function initialize(){
 			$(window).resize(function()
 			{
 				setTimeout(function() {
-					$( "#preview" ).css({left: window.innerWidth-(window.innerWidth/3 +3)})
+					$( "#preview" ).css({left: window.innerWidth-(previewWidth +3)})
 				}, 100);
 			});
 
@@ -759,5 +759,43 @@ function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizo
 	intersectionLabel.y(y - (7+intersectionLabel.height()/2)*yDirection)
 	intersectionLabelGroup.add(intersectionLabel)
 }
+
+
+/**
+ *  Procedure to Run Protocol
+ */
+const prodedureASteps = [
+	{action:"createCircle", data:[], desc:"A concentric circle is drawn within the femoral head. The centre of this circle is marked as point A"},
+	{action:"createPoint", 	data:[], desc:"The apex of the intercondylar notch is marked as point B"},
+	{action:"createLine", 	data:[], desc:"Points A and B are connected to form Line 1 (mechanical axis of femur)"},
+	{action:"createPoint", 	data:[], desc:"A concentric circle is drawn within the femoral head. The centre of this circle is marked as point A"},
+	{action:"createPoint", 	data:[], desc:"The most distal point of the medial femoral condyle convexity is marked as point C (avoiding osteophytes)"},
+	{action:"createPoint", 	data:[], desc:"The most distal point of the lateral femoral condyle convexity is marked as point D (avoiding osteophytes)"},
+	{action:"createLine", 	data:[], desc:"Points C and D are connected to form Line 2 (femoral knee joint orientation line)"},
+	{action:"computeAngle", data:[], desc:"The lateral angle between Lines 1 and 2 is the mechanical lateral distal femoral angle (mLDFA)"},
+	{action:"createLine", 	data:[], desc:"Line 3 (tibial knee joint orientation line) is the line of best fit between the medial and lateral tibial plateaus"},
+	{action:"createPoint", 	data:[], desc:"The centre of the tibial interspinous groove is marked as point E"},
+	{action:"createPoint", 	data:[], desc:"The medial limit of the talar dome articular surface is marked as point F"},
+	{action:"createPoint", 	data:[], desc:"The lateral limit of the talar dome articular surface is marked as point G"},
+	{action:"createLine", 	data:[], desc:"Points E and H are connected to form Line 4"},
+	{action:"computeAngle", data:[], desc:"The medial angle between lines 3 and 4 is the mechanical medial proximal tibial angle (mMPTA)"},
+]
+
+const prodedureBSteps = [
+	{action:"createLine", 	data:[], desc:"Line 1 is drawn tangential to the deepest point of the medial tibial plateau depression"},
+	{action:"createCircle", data:[], desc:"Circle α is drawn with the centre just distal to the tibial tuberosity so that it is simultaneously tangent to the anterior and posterior outer cortices"},
+	{action:"createCircle", data:[], desc:"Circle β is drawn just proximal to the distal tibial metaphyseal flare so that it is simultaneously tangent to the anterior and posterior outer cortices"},
+	{action:"createLine", 	data:[], desc:"The centres of circles α and β are connected to form Line 2 (Central anatomical axis)"},
+	{action:"computeAngle", data:[], desc:"The acute angle between Lines 1 and 2 is the anatomical posterior proximal tibial angle (aPPTA). The compliment angle to aPPTA is the posterior tibial slope (PTS). i.e PTS = 90-aPPTA. "},
+	{action:"createCircle", data:[], desc:"Circle γ is drawn with the centre at mid-tibial length so that it is simultaneously tangent to the anterior and posterior outer cortices"},
+	{action:"createLine", 	data:[], desc:"The centres of circles α and γ are connected to form Line 3 (Proximal anatomical axis)."},
+	{action:"computeAngle", data:[], desc:"The acute angle between Lines 1 and 3 is the anatomical posterior proximal tibial angle to the proximal anatomical axis (paPPTA). paPTS = 90 - paPPTA"},
+]
+
+function runProcedure(steps)
+{
+
+}
+
 
 initialize();
