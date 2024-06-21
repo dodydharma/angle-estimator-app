@@ -61,6 +61,9 @@ $( "#showProtocolB" ).on( "click", function(event) {
 	event.preventDefault();
 });
 
+$( "#SavingWindow" ).dialog({width : 300});
+$( "#SavingWindow" ).dialog( "close" );
+
 $( "#freeDraw" ).on( "click", function(event) {
 	showProtocolUI("G");
 	event.preventDefault();
@@ -172,16 +175,27 @@ function downloadURI(uri, name) {
 	link.click();
 	document.body.removeChild(link);
 	delete link;
+
+	$( "#SavingWindow" ).dialog( "close" );
+
 }
 
-document.getElementById('save').addEventListener(
-	'click',
-	function () {
-		var dataURL = stage.toDataURL({ pixelRatio: 3 });
-		downloadURI(dataURL, 'angle-calculation.png');
-	},
-	false
-);
+var isWaitingSave = 0
+$( "#save" ).on( "click", function(event) {
+	$( "#SavingWindow" ).dialog( "open" );
+
+	isWaitingSave+= 1;
+	setTimeout(function() {
+		isWaitingSave -= 1
+		if (isWaitingSave <= 0){
+			var dataURL = stage.toDataURL({ pixelRatio: 3 });
+			downloadURI(dataURL, 'angle-calculation.png');
+		}
+	}, 100);
+
+
+	event.preventDefault();
+});
 
 
 
@@ -193,7 +207,7 @@ function startDrawLine(xF,yF, xT,yT, color, customLabel='', dashed=false){
 	let lineColor = 'rgb(255,'+Math.floor(Math.random() *100)+55+','+Math.floor(Math.random() * 255)+')'
 
 	if(dashed) currentShapeName = ''
-	dashProp = dashed? [10, 5]: null;
+	dashProp = dashed? [7, 3]: null;
 
 	line = new Konva.Line({
 		stroke: color?color:lineColor,
@@ -927,11 +941,11 @@ const procedureASteps = [
 const procedureBSteps = [
 	{name: "procedureB0", action:"line", label:"1",	 desc:"Line 1 is drawn tangential to the deepest point of the medial tibial plateau depression"},
 	{name: "procedureB1", action:"circle", label:"α",  desc:"Circle α is drawn with the centre just distal to the tibial tuberosity so that it is simultaneously tangent to the anterior and posterior outer cortices"},
-	{name: "procedureB2", action:"circle", lable:"β",  desc:"Circle β is drawn just proximal to the distal tibial metaphyseal flare so that it is simultaneously tangent to the anterior and posterior outer cortices"},
-	{name: "procedureB3", action:"line", lable:"2", from:1, to:2, mode:"connectPoints",	 desc:"The centres of circles α and β are connected to form Line 2 (Central anatomical axis)"},
+	{name: "procedureB2", action:"circle", label:"β",  desc:"Circle β is drawn just proximal to the distal tibial metaphyseal flare so that it is simultaneously tangent to the anterior and posterior outer cortices"},
+	{name: "procedureB3", action:"line", label:"2", from:1, to:2, mode:"connectPoints",	 desc:"The centres of circles α and β are connected to form Line 2 (Central anatomical axis)"},
 	{name: "procedureB4", action:"computeAngle", mode:"computeAngle", label:"aPPTA",from:0, to:3,  desc:"The acute angle between Lines 1 and 2 is the anatomical posterior proximal tibial angle (aPPTA). The compliment angle to aPPTA is the posterior tibial slope (PTS). i.e PTS = 90-aPPTA. "},
-	{name: "procedureB5", action:"circle",  lable:"γ",  desc:"Circle γ is drawn with the centre at mid-tibial length so that it is simultaneously tangent to the anterior and posterior outer cortices"},
-	{name: "procedureB6", action:"line",  mode:"connectPoints",lable:"3", from:1, to:5,	 desc:"The centres of circles α and γ are connected to form Line 3 (Proximal anatomical axis)."},
+	{name: "procedureB5", action:"circle",  label:"γ",  desc:"Circle γ is drawn with the centre at mid-tibial length so that it is simultaneously tangent to the anterior and posterior outer cortices"},
+	{name: "procedureB6", action:"line",  mode:"connectPoints",label:"3", from:1, to:5,	 desc:"The centres of circles α and γ are connected to form Line 3 (Proximal anatomical axis)."},
 	{name: "procedureB7", action:"computeAngle", mode:"computeAngle", label:"paPTS ",from:0, to:6,  desc:"The acute angle between Lines 1 and 3 is the anatomical posterior proximal tibial angle to the proximal anatomical axis (paPPTA). paPTS = 90 - paPPTA"},
 ]
 
@@ -1040,9 +1054,13 @@ function moveToNextProcedure()
 					var cT = stateProcedure.procedures[target.to].data[1] //getShapeCenter
 					lx = lx + (cT.x()-lx)/2;
 					ly = ly + (cT.y()-ly)/2
+
+					startDrawLine(cF.x(), cF.y(), cT.x(), cT.y(),shapeColor,'',true)
+
 				}
 
-				var data = createCircle(lx, ly,3, 'red')
+
+				var data = createCircle(lx, ly,3, shapeColor, target.label )
 				storeDataToCurrentProcedure(data[0], data[1], data[2]);
 				highlightStepProtocol(stateProcedure.currentSteps, true)
 				moveToNextProcedure()
