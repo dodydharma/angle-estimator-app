@@ -339,8 +339,9 @@ textarea {
 
 .picker {
   position: absolute;
-  left: 0px;
-  top: 2px;
+	top: 37px;
+	left: 670px;
+
   border-radius: 5px;
   width: 18px;
   height: 18px;

@@ -20,6 +20,7 @@ let stage;
 let imageLayer ;
 
 let lineGroup;
+let dashedLineGroup;
 let pointGroup;
 let centerGroup;
 let labelGroup;
@@ -126,7 +127,7 @@ $("#file_input").change(function(e){
 
 
 // adjust  image view resolution
-let imageViewResolution = 1500
+let imageViewResolution = 1000
 let isWaitingInitializing = 0;
 var handle = $( "#custom-handle" );
 $( "#slider" ).slider({
@@ -185,9 +186,14 @@ document.getElementById('save').addEventListener(
 
 
 // Primitive Function for drawing
-function startDrawLine(xF,yF, xT,yT, color){
+function startDrawLine(xF,yF, xT,yT, color, customLabel='', dashed=false){
 	currentShapeName =  'line-' + (lineGroup.getChildren().length+1)
+	if(customLabel != '')
+		currentShapeName= 'line-'+customLabel;
 	let lineColor = 'rgb(255,'+Math.floor(Math.random() *100)+55+','+Math.floor(Math.random() * 255)+')'
+
+	if(dashed) currentShapeName = ''
+	dashProp = dashed? [10, 5]: null;
 
 	line = new Konva.Line({
 		stroke: color?color:lineColor,
@@ -196,6 +202,7 @@ function startDrawLine(xF,yF, xT,yT, color){
 		points: [xF, yF, xT, yT],
 		name: currentShapeName,
 		id: 'line-' + (lineGroup.children.length+1),
+		dash: dashProp,
 	});
 
 	currentShapeCenter = new Konva.Circle({
@@ -223,7 +230,10 @@ function startDrawLine(xF,yF, xT,yT, color){
 	currentLabel.offsetX(currentLabel.width() / 2);
 	currentLabel.x(currentLabel.x()+ currentLabel.width())
 	labelGroup.add(currentLabel)
-	lineGroup.add(line);
+
+	if(dashed)
+		dashedLineGroup.add(line)
+	else lineGroup.add(line);
 
 	activateUndo();
 
@@ -231,11 +241,13 @@ function startDrawLine(xF,yF, xT,yT, color){
 }
 
 // Primitive Function
-function createCircle(x,y,r, color='red'){
+function createCircle(x,y,r, color='red', customLabel=''){
 	// convert Point Index to alphabet character, 1, 2,3 to  point A, point B, point C
 	var pointIndex =pointGroup.getChildren().length+1
 	var pointIndexInAlphacharacter = (pointIndex + 9).toString(36).toUpperCase();
 	currentShapeName= 'point-'+pointIndexInAlphacharacter;
+	if(customLabel != '')
+		currentShapeName= 'point-'+customLabel;
 
 	circle = new Konva.Circle({
 		x: x,
@@ -342,6 +354,7 @@ function initialize(){
 		stage.height(img_height / ratio);
 		imageLayer.add(workingImage);
 
+		dashedLineGroup			  = new Konva.Group();    imageLayer.add(dashedLineGroup)
 		lineGroup                 = new Konva.Group();    imageLayer.add(lineGroup)
 		pointGroup                = new Konva.Group();    imageLayer.add(pointGroup)
 		centerGroup               = new Konva.Group();    imageLayer.add(centerGroup)
@@ -491,17 +504,17 @@ function initialize(){
 				drawmode = currentAction.action
 				if(drawmode == 'circle')
 				{
-					createCircle(mouseCurrentPosition.x, mouseCurrentPosition.y, 0, shapeColor);
+					createCircle(mouseCurrentPosition.x, mouseCurrentPosition.y, 0, shapeColor, currentAction.label);
 				}
 
 				if(drawmode == 'point')
 				{
-					createCircle(mouseCurrentPosition.x, mouseCurrentPosition.y, 3, shapeColor);
+					createCircle(mouseCurrentPosition.x, mouseCurrentPosition.y, 3, shapeColor, currentAction.label);
 				}
 
 				if(drawmode == 'line')
 				{
-					startDrawLine(mouseCurrentPosition.x, mouseCurrentPosition.y, mouseCurrentPosition.x, mouseCurrentPosition.y, shapeColor);
+					startDrawLine(mouseCurrentPosition.x, mouseCurrentPosition.y, mouseCurrentPosition.x, mouseCurrentPosition.y, shapeColor, currentAction.label);
 				}
 			}
 
@@ -698,7 +711,7 @@ function findLineIntersections(){
 	}
 }
 
-function findTwoLinesIntersection(currentLine,otherLine, inCludeOutSideLineRange = false){
+function findTwoLinesIntersection(currentLine,otherLine, inCludeOutSideLineRange = false, label= ''){
 	var xy1 = currentLine.points();
 	var xy2 = otherLine.points();
 	var isIntersX = isIntersects(xy1[0], xy1[1], xy1[2], xy1[3], xy2[0], xy2[1], xy2[2], xy2[3])
@@ -712,15 +725,15 @@ function findTwoLinesIntersection(currentLine,otherLine, inCludeOutSideLineRange
 		}
 	}else if(inCludeOutSideLineRange){
 		var pointOfIntersection = math.intersect([xy1[0], xy1[1]], [xy1[2], xy1[3]], [xy2[0], xy2[1]], [xy2[2], xy2[3]])
-		console.log("pointOfIntersection outside line",pointOfIntersection)
+		console.log("pointOfIntersection outside line",pointOfIntersection, label)
 		// createCircle(pointOfIntersection[0],pointOfIntersection[1],5,'red')
-		generateIntersectionData(currentLine, otherLine)
+		generateIntersectionData(currentLine, otherLine, inCludeOutSideLineRange, label)
 	}
 
 }
 
 
-function generateIntersectionData(firstLine, secondLine){
+function generateIntersectionData(firstLine, secondLine, inCludeOutSideLineRange= false, label=''){
 	var xy1 = firstLine.points();
 	var xy2 = secondLine.points();
 
@@ -731,8 +744,16 @@ function generateIntersectionData(firstLine, secondLine){
 	//var horizonAngle = getHorizonAngle(xy1, pointOfIntersection, xy2)
 	var horizontalvector = getHorizonVector(xy1, pointOfIntersection, xy2)
 
+	console.log('intersaection custon label', label)
 	createIntersectionPoint(pointOfIntersection[0],pointOfIntersection[1],2, firstLine.id(), secondLine.id(),
-		intersectionAngle, intersectionResultant, horizontalvector)
+		intersectionAngle, intersectionResultant, horizontalvector, shapeColor, label)
+
+	if(inCludeOutSideLineRange){
+		fp1 = getFurthestPointFrom(xy1, pointOfIntersection)
+		startDrawLine(fp1[0], fp1[1], pointOfIntersection[0], pointOfIntersection[1],shapeColor,'',true)
+		fp2 =getFurthestPointFrom(xy2, pointOfIntersection)
+		startDrawLine(fp2[0], fp2[1], pointOfIntersection[0], pointOfIntersection[1],shapeColor,'',true)
+	}
 
 	console.log('new intersection at', pointOfIntersection, firstLine.id(), secondLine.id())
 }
@@ -800,11 +821,12 @@ function findAngle3Points(p0x,p0y,p1x,p1y,p2x,p2y) {
 }
 
 // Primitive Function
-function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizonVector){
+function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizonVector, shapecolor='', customlabel=''){
+
 	// convert Point Index to alphabet character, 1, 2,3 to  point A, point B, point C
 	var pointIndex =intersectionGroup.getChildren().length+1
 	var pointIndexInAlphacharacter = (pointIndex + 9).toString(36).toUpperCase();
-	var color = 'red'
+	var color = shapeColor==''? 'red':shapeColor
 	var intersectionName= 'itx-'+pointIndexInAlphacharacter;
 
 	var intersectionPoint = new Konva.Circle({
@@ -833,7 +855,7 @@ function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizo
 		rotation:rotation,
 		angle: angle,
 		// fill: 'yellow',
-		stroke: 'red',
+		stroke: color,
 		strokeWidth: 2,
 	});
 	intersectionGroup.add(intersectionArc);
@@ -861,11 +883,14 @@ function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizo
 	intersectionAngle.y(y - intersectionAngle.height()/2 + 20* yDirection)
 	intersectionLabelGroup.add(intersectionAngle)
 
+	var itxlabel = 'itx-'+pointIndexInAlphacharacter+'-L('+l1name.replace('line-','')+','+l2name.replace('line-','')+')'
+	if( customlabel != '' )
+		itxlabel = customlabel
 	var intersectionLabel = new Konva.Text({
 		x: x,
 		y: y,
-		text: 'itx-'+pointIndexInAlphacharacter+'-L('+l1name.replace('line-','')+','+l2name.replace('line-','')+')',
-		fontSize: 9,
+		text: itxlabel,
+		fontSize: 12,
 		fontFamily: 'Calibri',
 		fill: color,
 		align: 'center',
@@ -873,8 +898,8 @@ function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizo
 		name: 'label-itx-'+l1name+'-'+l2name
 	});
 
-	intersectionLabel.x(x - (7+intersectionLabel.width()/2)*xDirection)
-	intersectionLabel.y(y - (7+intersectionLabel.height()/2)*yDirection)
+	intersectionLabel.x(x - (8+intersectionLabel.width()/2)*xDirection)
+	intersectionLabel.y(y - (8+intersectionLabel.height()/2)*yDirection)
 	intersectionLabelGroup.add(intersectionLabel)
 }
 
@@ -883,31 +908,31 @@ function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizo
  *  Procedure to Run Protocol
  */
 const procedureASteps = [
-	{name: "procedureA0", action:"circle", 	label:"A", data:[], desc:"A concentric circle is drawn within the femoral head. The centre of this circle is marked as point A"},
-	{name: "procedureA1", action:"point", 	label:"B", data:[], desc:"The apex of the intercondylar notch is marked as point B"},
-	{name: "procedureA2", action:"line", 	label:"1", mode:"connectPoints", from:0, to:1,	data:[], desc:"Points A and B are connected to form Line 1 (mechanical axis of femur)"},
-	{name: "procedureA3", action:"point", 	label:"C", data:[], desc:"The most distal point of the medial femoral condyle convexity is marked as point C (avoiding osteophytes)"},
-	{name: "procedureA4", action:"point", 	label:"D", data:[], desc:"The most distal point of the lateral femoral condyle convexity is marked as point D (avoiding osteophytes)"},
-	{name: "procedureA5", action:"line", 	label:"2", mode:"connectPoints",  from:3, to:4, data:[], desc:"Points C and D are connected to form Line 2 (femoral knee joint orientation line)"},
-	{name: "procedureA6", action:"computeAngle", label:"mLDFA", mode:"computeAngle", from:2, to:5, data:[], desc:"The lateral angle between Lines 1 and 2 is the mechanical lateral distal femoral angle (mLDFA)"},
-	{name: "procedureA7", action:"line", 	label:"3", data:[], desc:"Line 3 (tibial knee joint orientation line) is the line of best fit between the medial and lateral tibial plateaus"},
-	{name: "procedureA8", action:"computeMidPoint", 	mode:"computeMidPoint", from:7,	label:"E", data:[], desc:"The centre of the tibial interspinous groove is marked as point E"},
-	{name: "procedureA9", action:"point", 	label:"F", data:[], desc:"The medial limit of the talar dome articular surface is marked as point F"},
-	{name: "procedureA10", action:"point", 	label:"G", data:[], desc:"The lateral limit of the talar dome articular surface is marked as point G"},
-	{name: "procedureA11", action:"point", 	mode:"computeMidPoint", from:9, to:10, label:"H", data:[], desc:"The midpoint between points F and G is marked as point H"},
-	{name: "procedureA12", action:"line", 	label:"1", mode:"connectPoints", from:8, to:11,		label:"A", data:[], desc:"Points E and H are connected to form Line 4"},
-	{name: "procedureA13", action:"computeAngle", label:"mLDFA", mode:"computeAngle", from:7, to:12, label:"mMPTA", data:[], desc:"The medial angle between lines 3 and 4 is the mechanical medial proximal tibial angle (mMPTA)"},
+	{name: "procedureA0", action:"circle", 	label:"A",  desc:"A concentric circle is drawn within the femoral head. The centre of this circle is marked as point A"},
+	{name: "procedureA1", action:"point", 	label:"B",  desc:"The apex of the intercondylar notch is marked as point B"},
+	{name: "procedureA2", action:"line", 	label:"1", mode:"connectPoints", from:0, to:1,	 desc:"Points A and B are connected to form Line 1 (mechanical axis of femur)"},
+	{name: "procedureA3", action:"point", 	label:"C",  desc:"The most distal point of the medial femoral condyle convexity is marked as point C (avoiding osteophytes)"},
+	{name: "procedureA4", action:"point", 	label:"D",  desc:"The most distal point of the lateral femoral condyle convexity is marked as point D (avoiding osteophytes)"},
+	{name: "procedureA5", action:"line", 	label:"2", mode:"connectPoints",  from:3, to:4,  desc:"Points C and D are connected to form Line 2 (femoral knee joint orientation line)"},
+	{name: "procedureA6", action:"computeAngle", label:"mLDFA", mode:"computeAngle", from:2, to:5,  desc:"The lateral angle between Lines 1 and 2 is the mechanical lateral distal femoral angle (mLDFA)"},
+	{name: "procedureA7", action:"line", 	label:"3",  desc:"Line 3 (tibial knee joint orientation line) is the line of best fit between the medial and lateral tibial plateaus"},
+	{name: "procedureA8", action:"computeMidPoint", 	mode:"computeMidPoint", from:7,	label:"E",  desc:"The centre of the tibial interspinous groove is marked as point E"},
+	{name: "procedureA9", action:"point", 	label:"F",  desc:"The medial limit of the talar dome articular surface is marked as point F"},
+	{name: "procedureA10", action:"point", 	label:"G",  desc:"The lateral limit of the talar dome articular surface is marked as point G"},
+	{name: "procedureA11", action:"point", 	mode:"computeMidPoint", from:9, to:10, label:"H",  desc:"The midpoint between points F and G is marked as point H"},
+	{name: "procedureA12", action:"line", 	label:"1", mode:"connectPoints", from:8, to:11,		label:"A",  desc:"Points E and H are connected to form Line 4"},
+	{name: "procedureA13", action:"computeAngle", label:"mLDFA", mode:"computeAngle", from:7, to:12, label:"mMPTA",  desc:"The medial angle between lines 3 and 4 is the mechanical medial proximal tibial angle (mMPTA)"},
 ]
 
 const procedureBSteps = [
-	{name: "procedureB0", action:"line", 	data:[], desc:"Line 1 is drawn tangential to the deepest point of the medial tibial plateau depression"},
-	{name: "procedureB1", action:"circle", data:[], desc:"Circle α is drawn with the centre just distal to the tibial tuberosity so that it is simultaneously tangent to the anterior and posterior outer cortices"},
-	{name: "procedureB2", action:"circle", data:[], desc:"Circle β is drawn just proximal to the distal tibial metaphyseal flare so that it is simultaneously tangent to the anterior and posterior outer cortices"},
-	{name: "procedureB3", action:"line", 	data:[], desc:"The centres of circles α and β are connected to form Line 2 (Central anatomical axis)"},
-	{name: "procedureB4", action:"computeAngle", data:[], desc:"The acute angle between Lines 1 and 2 is the anatomical posterior proximal tibial angle (aPPTA). The compliment angle to aPPTA is the posterior tibial slope (PTS). i.e PTS = 90-aPPTA. "},
-	{name: "procedureB5", action:"circle", data:[], desc:"Circle γ is drawn with the centre at mid-tibial length so that it is simultaneously tangent to the anterior and posterior outer cortices"},
-	{name: "procedureB6", action:"line", 	data:[], desc:"The centres of circles α and γ are connected to form Line 3 (Proximal anatomical axis)."},
-	{name: "procedureB7", action:"computeAngle", data:[], desc:"The acute angle between Lines 1 and 3 is the anatomical posterior proximal tibial angle to the proximal anatomical axis (paPPTA). paPTS = 90 - paPPTA"},
+	{name: "procedureB0", action:"line", label:"1",	 desc:"Line 1 is drawn tangential to the deepest point of the medial tibial plateau depression"},
+	{name: "procedureB1", action:"circle", label:"α",  desc:"Circle α is drawn with the centre just distal to the tibial tuberosity so that it is simultaneously tangent to the anterior and posterior outer cortices"},
+	{name: "procedureB2", action:"circle", lable:"β",  desc:"Circle β is drawn just proximal to the distal tibial metaphyseal flare so that it is simultaneously tangent to the anterior and posterior outer cortices"},
+	{name: "procedureB3", action:"line", lable:"2", from:1, to:2, mode:"connectPoints",	 desc:"The centres of circles α and β are connected to form Line 2 (Central anatomical axis)"},
+	{name: "procedureB4", action:"computeAngle", mode:"computeAngle", label:"aPPTA",from:0, to:3,  desc:"The acute angle between Lines 1 and 2 is the anatomical posterior proximal tibial angle (aPPTA). The compliment angle to aPPTA is the posterior tibial slope (PTS). i.e PTS = 90-aPPTA. "},
+	{name: "procedureB5", action:"circle",  lable:"γ",  desc:"Circle γ is drawn with the centre at mid-tibial length so that it is simultaneously tangent to the anterior and posterior outer cortices"},
+	{name: "procedureB6", action:"line",  mode:"connectPoints",lable:"3", from:1, to:5,	 desc:"The centres of circles α and γ are connected to form Line 3 (Proximal anatomical axis)."},
+	{name: "procedureB7", action:"computeAngle", mode:"computeAngle", label:"paPTS ",from:0, to:6,  desc:"The acute angle between Lines 1 and 3 is the anatomical posterior proximal tibial angle to the proximal anatomical axis (paPPTA). paPTS = 90 - paPPTA"},
 ]
 
 var stateProcedure = {
@@ -997,10 +1022,12 @@ function moveToNextProcedure()
 			moveToNextProcedure()
 		}else if(target.mode == "computeAngle"){
 			console.log(target.mode, target.from, target.to)
+			console.log("from", stateProcedure.procedures[target.from].data)
+			console.log("to", stateProcedure.procedures[target.to].data)
 			var line1 = stateProcedure.procedures[target.from].data[0] //getShape
 			var line2 = stateProcedure.procedures[target.to].data[0] //getShape
-			console.log("line1, line1", line1.points(), line2.points())
-			findTwoLinesIntersection(line1, line2, true)
+			console.log("line1, line1", line1.points(), line2.points(), target.label)
+			findTwoLinesIntersection(line1, line2, true, ''+target.label )
 			highlightStepProtocol(stateProcedure.currentSteps, true)
 			moveToNextProcedure()
 			return;
