@@ -1,11 +1,11 @@
 // const information = document.getElementById('info')
 // information.innerText = `This app is using Chrome (v${versions.chrome()}), Node.js (v${versions.node()}), and Electron (v${versions.electron()})`
 
-const func = async () => {
-	const response = await window.versions.ping()
-	console.log(response) // prints out 'pong'
-}
-func()
+// const func = async () => {
+// 	const response = await window.versions.ping()
+// 	console.log(response) // prints out 'pong'
+// }
+// func()
 
 
 
@@ -39,17 +39,28 @@ let currentLabel;
 let mouseCurrentPosition
 
 // Help Protocol information Dialog
-$( "#protocolA" ).dialog({width : 600});
+$( "#protocolA" ).dialog({width : 650});
+$( "#protocolA" ).dialog({position: { my: "right bottom", at: "right bottom", of: window }});
 {$( "#protocolA" ).dialog( "close" );}
 $( "#showProtocolA" ).on( "click", function(event) {
+	$( "#protocolB" ).dialog( "close" );
 	$( "#protocolA" ).dialog( "open" )
+	$( "#protocolA" ).dialog({position: { my: "right bottom", at: "right bottom", of: window }});
+	$( '#protocolA').parent().css({position:"fixed"});
+	chooseProtocol(procedureASteps)
 	event.preventDefault();
 });
 
-$( "#protocolB" ).dialog({width : 600});
+$( "#protocolB" ).dialog({width : 650});
+$( "#protocolB" ).dialog({position: { my: "right bottom", at: "right bottom", of: window }});
 {$( "#protocolB" ).dialog( "close" );}
 $( "#showProtocolB" ).on( "click", function(event) {
-	$( "#protocolB" ).dialog( "open" );event.preventDefault();
+	$( "#protocolA").dialog( "close" );
+	$( "#protocolB" ).dialog( "open" );
+	$( "#protocolB" ).dialog({position: { my: "right bottom", at: "right bottom", of: window }});
+	$( '#protocolB').parent().css({position:"fixed"});
+	chooseProtocol(procedureBSteps)
+	event.preventDefault();
 });
 
 
@@ -66,7 +77,7 @@ $('#drawmode input').on('change', function() {
 
 let shapeColor;
 $("#picker").colorPick({
-	'initialColor' : '#f1c40f',
+	'initialColor' : '#c0392b',
 	'palette': ["#f1c40f", "#f39c12", "#e67e22", "#d35400", "#e74c3c", "#c0392b", "#ecf0f1","#1abc9c", "#16a085", "#2ecc71", "#27ae60", "#3498db", "#2980b9", "#9b59b6", "#8e44ad", "#34495e", "#2c3e50"],
 	'onColorSelected': function() {
 		shapeColor = this.color
@@ -103,8 +114,8 @@ function activateUndo(){
 
 // listen for the file input change event and load the image.
 let URL = window.webkitURL || window.URL;
-let url = 'images/plain.jpg';
-// let url = 'images/NO08F52A.JPG';
+//let url = 'images/plain.jpg';
+let url = 'images/NO08F52A.JPG';
 $("#file_input").change(function(e){
 	url = URL.createObjectURL(e.target.files[0]);
 	initialize();
@@ -192,6 +203,8 @@ function startDrawLine(xF,yF, xT,yT, color){
 	lineGroup.add(line);
 
 	activateUndo();
+
+	return [line, currentShapeCenter, currentLabel];
 }
 
 // Primitive Function
@@ -260,6 +273,7 @@ function createCircle(x,y,r, color='red'){
 
 	});
 
+	return [circle, currentShapeCenter, currentLabel];
 }
 
 function initialize(){
@@ -284,7 +298,10 @@ function initialize(){
 		var img_height = img.height;
 		// calculate dimensions to get max  pixel
 		var max = imageViewResolution;
-		var ratio = (img_width > img_height ? (img_width / max) : (img_height / max))
+		// var ratio = (img_width > img_height ? (img_width / max) : (img_height / max))
+		max = (img_width > img_height) ? max : (img_width > window.innerWidth) ? window.innerWidth : max
+
+		var ratio = img_width/max
 
 		// now load the main working image into Konva
 		var workingImage = new Konva.Image({
@@ -319,7 +336,7 @@ function initialize(){
 
 		// create smaller preview stage
 		var zoomScale = 5
-		maxZoomWidth = 300
+		maxZoomWidth = 400
 		var previewWidth =  math.min(window.innerWidth / 3, maxZoomWidth)
 		var previewHeight = math.min(window.innerHeight / 3, maxZoomWidth)
 		const previewStage = new Konva.Stage({
@@ -380,6 +397,16 @@ function initialize(){
 			{
 				setTimeout(function() {
 					$( "#preview" ).css({left: window.innerWidth-(previewWidth +3)})
+
+					if($('#protocolA').dialog('isOpen')){
+						$( "#protocolA" ).dialog({position: { my: "right bottom", at: "right bottom", of: window }});
+						$( '#protocolA').parent().css({position:"fixed"});
+					}
+					if($('#protocolB').dialog('isOpen')){
+						$( "#protocolB" ).dialog({position: { my: "right bottom", at: "right bottom", of: window }});
+						$( '#protocolB').parent().css({position:"fixed"});
+					}
+
 				}, 100);
 			});
 
@@ -400,21 +427,51 @@ function initialize(){
 			updateCursor()
 			originClickPosition = mouseCurrentPosition;
 
+			var currentAction = runProtocol()
 
-			if(drawmode == 'circle')
+			if(currentAction == null) // Free Draw
 			{
-				createCircle(mouseCurrentPosition.x, mouseCurrentPosition.y, 0, shapeColor);
+				console.log("Free Draw")
+
+				if(drawmode == 'circle')
+				{
+					createCircle(mouseCurrentPosition.x, mouseCurrentPosition.y, 0, shapeColor);
+				}
+
+				if(drawmode == 'point')
+				{
+					createCircle(mouseCurrentPosition.x, mouseCurrentPosition.y, 3, shapeColor);
+				}
+
+				if(drawmode == 'line')
+				{
+					startDrawLine(mouseCurrentPosition.x, mouseCurrentPosition.y, mouseCurrentPosition.x, mouseCurrentPosition.y, shapeColor);
+				}
+			}
+			else if(currentAction == {}) // end of a protocol
+			{
+				console.log("End of protocol")
+
+			}else{
+				console.log("Execute ", currentAction)
+				drawmode = currentAction.action
+				if(drawmode == 'circle')
+				{
+					createCircle(mouseCurrentPosition.x, mouseCurrentPosition.y, 0, shapeColor);
+				}
+
+				if(drawmode == 'point')
+				{
+					createCircle(mouseCurrentPosition.x, mouseCurrentPosition.y, 3, shapeColor);
+				}
+
+				if(drawmode == 'line')
+				{
+					startDrawLine(mouseCurrentPosition.x, mouseCurrentPosition.y, mouseCurrentPosition.x, mouseCurrentPosition.y, shapeColor);
+				}
 			}
 
-			if(drawmode == 'point')
-			{
-				createCircle(mouseCurrentPosition.x, mouseCurrentPosition.y, 3, shapeColor);
-			}
 
-			if(drawmode == 'line')
-			{
-				startDrawLine(mouseCurrentPosition.x, mouseCurrentPosition.y, mouseCurrentPosition.x, mouseCurrentPosition.y, shapeColor);
-			}
 
 		});
 
@@ -469,6 +526,7 @@ function initialize(){
 		});
 
 		stage.on('mouseup', (e) => {
+			UpdateProtocol()
 			activateUndo()
 			findLineIntersections()
 			imageLayer.draw();
@@ -764,38 +822,100 @@ function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizo
 /**
  *  Procedure to Run Protocol
  */
-const prodedureASteps = [
-	{action:"createCircle", data:[], desc:"A concentric circle is drawn within the femoral head. The centre of this circle is marked as point A"},
-	{action:"createPoint", 	data:[], desc:"The apex of the intercondylar notch is marked as point B"},
-	{action:"createLine", 	data:[], desc:"Points A and B are connected to form Line 1 (mechanical axis of femur)"},
-	{action:"createPoint", 	data:[], desc:"A concentric circle is drawn within the femoral head. The centre of this circle is marked as point A"},
-	{action:"createPoint", 	data:[], desc:"The most distal point of the medial femoral condyle convexity is marked as point C (avoiding osteophytes)"},
-	{action:"createPoint", 	data:[], desc:"The most distal point of the lateral femoral condyle convexity is marked as point D (avoiding osteophytes)"},
-	{action:"createLine", 	data:[], desc:"Points C and D are connected to form Line 2 (femoral knee joint orientation line)"},
-	{action:"computeAngle", data:[], desc:"The lateral angle between Lines 1 and 2 is the mechanical lateral distal femoral angle (mLDFA)"},
-	{action:"createLine", 	data:[], desc:"Line 3 (tibial knee joint orientation line) is the line of best fit between the medial and lateral tibial plateaus"},
-	{action:"createPoint", 	data:[], desc:"The centre of the tibial interspinous groove is marked as point E"},
-	{action:"createPoint", 	data:[], desc:"The medial limit of the talar dome articular surface is marked as point F"},
-	{action:"createPoint", 	data:[], desc:"The lateral limit of the talar dome articular surface is marked as point G"},
-	{action:"createLine", 	data:[], desc:"Points E and H are connected to form Line 4"},
-	{action:"computeAngle", data:[], desc:"The medial angle between lines 3 and 4 is the mechanical medial proximal tibial angle (mMPTA)"},
+const procedureASteps = [
+	{name: "procedureA1", action:"circle", data:[], desc:"A concentric circle is drawn within the femoral head. The centre of this circle is marked as point A"},
+	{name: "procedureA2", action:"point", 	data:[], desc:"The apex of the intercondylar notch is marked as point B"},
+	{name: "procedureA3", action:"line", 	data:[], desc:"Points A and B are connected to form Line 1 (mechanical axis of femur)"},
+	{name: "procedureA4", action:"point", 	data:[], desc:"A concentric circle is drawn within the femoral head. The centre of this circle is marked as point A"},
+	{name: "procedureA5", action:"point", 	data:[], desc:"The most distal point of the medial femoral condyle convexity is marked as point C (avoiding osteophytes)"},
+	{name: "procedureA6", action:"point", 	data:[], desc:"The most distal point of the lateral femoral condyle convexity is marked as point D (avoiding osteophytes)"},
+	{name: "procedureA7", action:"line", 	data:[], desc:"Points C and D are connected to form Line 2 (femoral knee joint orientation line)"},
+	{name: "procedureA8", action:"computeAngle", data:[], desc:"The lateral angle between Lines 1 and 2 is the mechanical lateral distal femoral angle (mLDFA)"},
+	{name: "procedureA9", action:"line", 	data:[], desc:"Line 3 (tibial knee joint orientation line) is the line of best fit between the medial and lateral tibial plateaus"},
+	{name: "procedureA10", action:"point", 	data:[], desc:"The centre of the tibial interspinous groove is marked as point E"},
+	{name: "procedureA11", action:"point", 	data:[], desc:"The medial limit of the talar dome articular surface is marked as point F"},
+	{name: "procedureA12", action:"point", 	data:[], desc:"The lateral limit of the talar dome articular surface is marked as point G"},
+	{name: "procedureA13", action:"line", 	data:[], desc:"Points E and H are connected to form Line 4"},
+	{name: "procedureA14", action:"computeAngle", data:[], desc:"The medial angle between lines 3 and 4 is the mechanical medial proximal tibial angle (mMPTA)"},
 ]
 
-const prodedureBSteps = [
-	{action:"createLine", 	data:[], desc:"Line 1 is drawn tangential to the deepest point of the medial tibial plateau depression"},
-	{action:"createCircle", data:[], desc:"Circle α is drawn with the centre just distal to the tibial tuberosity so that it is simultaneously tangent to the anterior and posterior outer cortices"},
-	{action:"createCircle", data:[], desc:"Circle β is drawn just proximal to the distal tibial metaphyseal flare so that it is simultaneously tangent to the anterior and posterior outer cortices"},
-	{action:"createLine", 	data:[], desc:"The centres of circles α and β are connected to form Line 2 (Central anatomical axis)"},
-	{action:"computeAngle", data:[], desc:"The acute angle between Lines 1 and 2 is the anatomical posterior proximal tibial angle (aPPTA). The compliment angle to aPPTA is the posterior tibial slope (PTS). i.e PTS = 90-aPPTA. "},
-	{action:"createCircle", data:[], desc:"Circle γ is drawn with the centre at mid-tibial length so that it is simultaneously tangent to the anterior and posterior outer cortices"},
-	{action:"createLine", 	data:[], desc:"The centres of circles α and γ are connected to form Line 3 (Proximal anatomical axis)."},
-	{action:"computeAngle", data:[], desc:"The acute angle between Lines 1 and 3 is the anatomical posterior proximal tibial angle to the proximal anatomical axis (paPPTA). paPTS = 90 - paPPTA"},
+const procedureBSteps = [
+	{name: "procedureB1", action:"line", 	data:[], desc:"Line 1 is drawn tangential to the deepest point of the medial tibial plateau depression"},
+	{name: "procedureB2", action:"circle", data:[], desc:"Circle α is drawn with the centre just distal to the tibial tuberosity so that it is simultaneously tangent to the anterior and posterior outer cortices"},
+	{name: "procedureB3", action:"circle", data:[], desc:"Circle β is drawn just proximal to the distal tibial metaphyseal flare so that it is simultaneously tangent to the anterior and posterior outer cortices"},
+	{name: "procedureB4", action:"line", 	data:[], desc:"The centres of circles α and β are connected to form Line 2 (Central anatomical axis)"},
+	{name: "procedureB5", action:"computeAngle", data:[], desc:"The acute angle between Lines 1 and 2 is the anatomical posterior proximal tibial angle (aPPTA). The compliment angle to aPPTA is the posterior tibial slope (PTS). i.e PTS = 90-aPPTA. "},
+	{name: "procedureB6", action:"circle", data:[], desc:"Circle γ is drawn with the centre at mid-tibial length so that it is simultaneously tangent to the anterior and posterior outer cortices"},
+	{name: "procedureB7", action:"line", 	data:[], desc:"The centres of circles α and γ are connected to form Line 3 (Proximal anatomical axis)."},
+	{name: "procedureB8", action:"computeAngle", data:[], desc:"The acute angle between Lines 1 and 3 is the anatomical posterior proximal tibial angle to the proximal anatomical axis (paPPTA). paPTS = 90 - paPPTA"},
 ]
 
-function runProcedure(steps)
+var stateProcedure = {
+	currentSteps: 0,
+	procedures: []
+}
+
+function chooseProtocol(procedures)
 {
+	resetProtocol()
+	stateProcedure.procedures = procedures
+
+	console.log(stateProcedure)
+
+	UpdateProtocol()
+}
+
+function resetProtocol()
+{
+	stateProcedure.currentSteps = 0
+	stateProcedure.procedures= []
+	return stateProcedure
+}
+
+function runProtocol()
+{
+	if(stateProcedure.procedures.length == 0 ){
+		return null
+	}
+
+	if(stateProcedure.currentSteps > stateProcedure.procedures.length-1){
+		return {}
+	}else{
+		UpdateProtocol()
+		console.log(stateProcedure);
+		target = stateProcedure.procedures[stateProcedure.currentSteps]
+		stateProcedure.currentSteps += 1
+
+		return target
+	}
 
 }
+
+function UpdateProtocol()
+{
+	if(stateProcedure.procedures.length > 0 && stateProcedure.currentSteps < stateProcedure.procedures.length){
+		if(drawmode == 'line'){
+			stateProcedure.procedures[stateProcedure.currentSteps].data = [currentShapeCenter, line, currentShapeName]
+		}else if(drawmode == 'circle'){
+			stateProcedure.procedures[stateProcedure.currentSteps].data = [currentShapeCenter, circle, currentShapeName]
+		}else if(drawmode == 'point'){
+			stateProcedure.procedures[stateProcedure.currentSteps].data = [currentShapeCenter, circle, currentShapeName]
+		}
+
+		// Highlight next Action in Protocol
+		$( "#"+stateProcedure.procedures[stateProcedure.currentSteps].name).addClass("highlight");
+
+		if(stateProcedure.currentSteps>0) {
+			$("#" + stateProcedure.procedures[stateProcedure.currentSteps-1].name).removeClass("highlight");
+		}
+
+		// Check Next Step
+
+	}
+
+
+}
+
 
 
 initialize();
