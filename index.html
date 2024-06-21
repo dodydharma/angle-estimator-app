@@ -22,62 +22,70 @@
 	<body>
 		<div >
 			<header>
+				<button id="reset">Reset</button>
 				<input type="file" id="file_input">
+				<div id="checkboxWrapperisFullSize">
+					<input type="checkbox" id="isFullSize" name="isFullSize" />
+					<label for="isFullSize">Show Full Image Size</label>
+				</div>
 				<div id="slider">
 					<div id="custom-handle" class="ui-slider-handle"></div>
 				</div>
 				<form id="drawmode">
 					<fieldset>
-						<div class="picker" id="picker"></div>
-						<label><input type="radio" name="drawmode" value="line"  checked/> Line</label>
-						<label><input type="radio" name="drawmode" value="point" /> Point</label>
-						<label><input type="radio" name="drawmode" value="circle" /> Circle</label>
-						<label><input type="radio" name="drawmode" value="delete" /> delete</label>
+						<div id="toolbox">
+							<div class="picker" id="picker"></div>
+							<label><input type="radio" name="drawmode" value="line"  checked/> Line</label>
+							<label><input type="radio" name="drawmode" value="point" /> Point</label>
+							<label><input type="radio" name="drawmode" value="circle" /> Circle</label>
+							<label><input type="radio" name="drawmode" value="delete" /> delete</label>
+						</div>
 						<!--        <input type="submit" value="&#9100; undo" id="undo" style="margin-left: 50px">-->
-						<div id="buttons"><button id="save">Save as image</button></div>
+						<div id="buttons"><button id="save">Save Result</button></div>
 						<div id="buttons2"><button id="showProtocolA">Coronal plane alignment measurement</button></div>
 						<div id="buttons3"><button id="showProtocolB">Posterior tibial slope measurement</button></div>
+						<div id="buttons4"><button id="freeDraw">General Measurement</button></div>
 
 					</fieldset>
 				</form>
-
+				<div id="preview" class="ui-widget-content"></div>
 			</header>
 			<section class="main">
 				<div id="container"></div>
 			</section>
 			<footer></footer>
 		</div>
-		<div id="preview" class="ui-widget-content"></div>
+
 		<div id="protocolA" title="PROTOCOL A - Coronal plane alignment measurement protocol." >
 <!--			<h3 class="ui-widget-header ui-corner-all">Coronal plane alignment measurement protocol.</h3>-->
 			<ol>
-				<li id="procedureA1">A concentric circle is drawn within the femoral head. The centre of this circle is marked as point A</li>
-				<li id="procedureA2" >The apex of the intercondylar notch is marked as point B</li>
-				<li id="procedureA3" >Points A and B are connected to form Line 1 (mechanical axis of femur)</li>
-				<li id="procedureA4" >The most distal point of the medial femoral condyle convexity is marked as point C (avoiding osteophytes)</li>
-				<li id="procedureA5" >The most distal point of the lateral femoral condyle convexity is marked as point D (avoiding osteophytes)</li>
-				<li id="procedureA6" >Points C and D are connected to form Line 2 (femoral knee joint orientation line)</li>
-				<li id="procedureA7" >The lateral angle between Lines 1 and 2 is the mechanical lateral distal femoral angle (mLDFA)</li>
-				<li id="procedureA8" >Line 3 (tibial knee joint orientation line) is the line of best fit between the medial and lateral tibial plateaus</li>
-				<li id="procedureA9" >The centre of the tibial interspinous groove is marked as point E</li>
-				<li id="procedureA10" >The medial limit of the talar dome articular surface is marked as point F</li>
-				<li id="procedureA11" >The lateral limit of the talar dome articular surface is marked as point G</li>
-				<li id="procedureA12" >The midpoint between points F and G is marked as point H</li>
-				<li id="procedureA13" >Points E and H are connected to form Line 4</li>
-				<li id="procedureA14" >The medial angle between lines 3 and 4 is the mechanical medial proximal tibial angle (mMPTA)</li>
+				<li id="procedureA0">A concentric circle is drawn within the femoral head. The centre of this circle is marked as point A</li>
+				<li id="procedureA1" >The apex of the intercondylar notch is marked as point B</li>
+				<li id="procedureA2" >Points A and B are connected to form Line 1 (mechanical axis of femur)</li>
+				<li id="procedureA3" >The most distal point of the medial femoral condyle convexity is marked as point C (avoiding osteophytes)</li>
+				<li id="procedureA4" > The most distal point of the lateral femoral condyle convexity is marked as point D (avoiding osteophytes)</li>
+				<li id="procedureA5" >Points C and D are connected to form Line 2 (femoral knee joint orientation line)</li>
+				<li id="procedureA6" >The lateral angle between Lines 1 and 2 is the mechanical lateral distal femoral angle (mLDFA)</li>
+				<li id="procedureA7" >Line 3 (tibial knee joint orientation line) is the line of best fit between the medial and lateral tibial plateaus</li>
+				<li id="procedureA8" >The centre of the tibial interspinous groove is marked as point E</li>
+				<li id="procedureA9" >The medial limit of the talar dome articular surface is marked as point F</li>
+				<li id="procedureA10" >The lateral limit of the talar dome articular surface is marked as point G</li>
+				<li id="procedureA11" >The midpoint between points F and G is marked as point H</li>
+				<li id="procedureA12" >Points E and H are connected to form Line 4</li>
+				<li id="procedureA13" >The medial angle between lines 3 and 4 is the mechanical medial proximal tibial angle (mMPTA)</li>
 			</ol>
 		</div>
 		<div id="protocolB" title="PROTOCOL B - Posterior tibial slope measurement protocol">
 <!--			<h3 class="ui-widget-header ui-corner-all">Posterior tibial slope measurement protocol</h3>-->
 			<ol >
-				<li id="procedureB1" >Line 1 is drawn tangential to the deepest point of the medial tibial plateau depression</li>
-				<li id="procedureB2" >Circle &alpha; is drawn with the centre just distal to the tibial tuberosity so that it is simultaneously tangent to the anterior and posterior outer cortices</li>
-				<li id="procedureB3" >Circle &beta; is drawn just proximal to the distal tibial metaphyseal flare so that it is simultaneously tangent to the anterior and posterior outer cortices</li>
-				<li id="procedureB4" >The centres of circles &alpha; and &beta; are connected to form Line 2 (Central anatomical axis)</li>
-				<li id="procedureB5" >The acute angle between Lines 1 and 2 is the anatomical posterior proximal tibial angle (aPPTA). The compliment angle to aPPTA is the posterior tibial slope (PTS). i.e PTS = 90-aPPTA.&nbsp;</li>
-				<li id="procedureB6" >Circle &gamma; is drawn with the centre at mid-tibial length so that it is simultaneously tangent to the anterior and posterior outer cortices</li>
-				<li id="procedureB7" >The centres of circles &alpha; and &gamma; are connected to form Line 3 (Proximal anatomical axis).</li>
-				<li id="procedureB8" >The acute angle between Lines 1 and 3 is the anatomical posterior proximal tibial angle to the proximal anatomical axis (paPPTA). paPTS = 90 - paPPTA</li>
+				<li id="procedureB0" >Line 1 is drawn tangential to the deepest point of the medial tibial plateau depression</li>
+				<li id="procedureB1" >Circle &alpha; is drawn with the centre just distal to the tibial tuberosity so that it is simultaneously tangent to the anterior and posterior outer cortices</li>
+				<li id="procedureB2" >Circle &beta; is drawn just proximal to the distal tibial metaphyseal flare so that it is simultaneously tangent to the anterior and posterior outer cortices</li>
+				<li id="procedureB3" >The centres of circles &alpha; and &beta; are connected to form Line 2 (Central anatomical axis)</li>
+				<li id="procedureB4" >The acute angle between Lines 1 and 2 is the anatomical posterior proximal tibial angle (aPPTA). The compliment angle to aPPTA is the posterior tibial slope (PTS). i.e PTS = 90-aPPTA.&nbsp;</li>
+				<li id="procedureB5" >Circle &gamma; is drawn with the centre at mid-tibial length so that it is simultaneously tangent to the anterior and posterior outer cortices</li>
+				<li id="procedureB6" >The centres of circles &alpha; and &gamma; are connected to form Line 3 (Proximal anatomical axis).</li>
+				<li id="procedureB7" >The acute angle between Lines 1 and 3 is the anatomical posterior proximal tibial angle to the proximal anatomical axis (paPPTA). paPTS = 90 - paPPTA</li>
 			</ol>
 		</div>
 		<!--		<p id="info"></p>-->
