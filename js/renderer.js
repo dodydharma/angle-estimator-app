@@ -44,6 +44,15 @@ $('#reset').click(function() {
 	location.reload();
 });
 
+$( "#selectProtocol" ).selectmenu(
+	{
+		change: function( event, data ) {
+			console.log(data.item.value)
+			showProtocolUI(data.item.value);
+		}
+	}
+);
+
 // Help Protocol information Dialog
 $( "#protocolA" ).dialog({width : 650});
 $( "#protocolA" ).dialog({position: { my: "right bottom", at: "right bottom", of: window }});
@@ -590,8 +599,11 @@ function initialize(){
 		});
 
 		stage.on('mouseup', (e) => {
-			if(validateShape() == true)
-				UpdateProtocol()
+			if(validateShape() == true){
+				isWaitingForUpdateProtocol = true;
+				updateProtocol();
+			}
+
 
 			activateUndo()
 			imageLayer.draw();
@@ -611,7 +623,14 @@ function initialize(){
 					cancelDraw()
 					return false;
 				}
+			}
 
+			if(drawmode == 'circle'){
+				console.log('radius ', circle.radius())
+				if(circle.radius() <= 3){
+					cancelDraw()
+					return false;
+				}
 			}
 
 			return true;
@@ -620,8 +639,17 @@ function initialize(){
 		function cancelDraw() {
 			console.log('cancel draw')
 			if (line ){line.destroy(); currentShapeCenter.destroy(), currentLabel.destroy()}
-			if  (circle) circle.destroy();
+			if  (circle) circle.destroy();currentShapeCenter.destroy(); currentLabel.destroy();
 		}
+
+		$( "#goForwardButton" ).on( "click", function(event) {
+			if(isWaitingForUpdateProtocol){
+				updateProtocol();
+			}
+			event.preventDefault();
+		});
+
+
 	}
 }
 
@@ -968,6 +996,7 @@ function resetProtocol()
 	return stateProcedure
 }
 
+
 function runProtocol()
 {
 	if(stateProcedure.procedures.length == 0 ){
@@ -1078,7 +1107,7 @@ function storeDataToCurrentProcedure(shape, shapeCenter, shapeName)
 	stateProcedure.procedures[stateProcedure.currentSteps].data = [ shape, shapeCenter, shapeName]
 }
 
-function UpdateProtocol()
+function updateProtocol()
 {
 	if(stateProcedure.procedures.length > 0 && stateProcedure.currentSteps < stateProcedure.procedures.length){
 		if(drawmode == 'line'){
@@ -1093,6 +1122,8 @@ function UpdateProtocol()
 
 	moveToNextProcedure()
 	highlightStepProtocol(stateProcedure.currentSteps)
+
+	isWaitingForUpdateProtocol = false
 }
 
 function showProtocolUI(target){

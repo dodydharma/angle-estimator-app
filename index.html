@@ -43,9 +43,22 @@
 						</div>
 						<!--        <input type="submit" value="&#9100; undo" id="undo" style="margin-left: 50px">-->
 						<div id="buttons"><button id="save">Save Result</button></div>
-						<div id="buttons2"><button id="showProtocolA">Coronal plane alignment measurement</button></div>
-						<div id="buttons3"><button id="showProtocolB">Posterior tibial slope measurement</button></div>
-						<div id="buttons4"><button id="freeDraw">General Measurement</button></div>
+<!--						<div id="buttons2"><button id="showProtocolA">Coronal plane alignment measurement</button></div>-->
+<!--						<div id="buttons3"><button id="showProtocolB">Posterior tibial slope measurement</button></div>-->
+<!--						<div id="buttons4"><button id="freeDraw">General Measurement</button></div>-->
+
+						<div id="selectProtocolWrapper">
+							<label for="selectProtocol"> Protocol</label>
+							<select name="selectProtocol" id="selectProtocol">
+								<optgroup label="Pre-defined Protocol">
+									<option value="A">Coronal plane alignment measurement</option>
+									<option value="B">Posterior tibial slope measurement</option>
+								</optgroup>
+								<optgroup label="Free draw">
+									<option value="G">General Measurement</option>
+								</optgroup>
+							</select>
+						</div>
 
 					</fieldset>
 				</form>
@@ -59,6 +72,12 @@
 
 		<div id="protocolA" title="PROTOCOL A - Coronal plane alignment measurement protocol." >
 <!--			<h3 class="ui-widget-header ui-corner-all">Coronal plane alignment measurement protocol.</h3>-->
+				<form>
+					<fieldset>
+						<button id="goBackwardButton">Undo</button>
+						<button id="goForwardButton">Go next</button>
+					</fieldset>
+				</form>
 			<ol>
 				<li id="procedureA0">A concentric circle is drawn within the femoral head. The centre of this circle is marked as point A</li>
 				<li id="procedureA1" >The apex of the intercondylar notch is marked as point B</li>

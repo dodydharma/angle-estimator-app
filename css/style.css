@@ -50,6 +50,16 @@ body {
 	font-feature-settings: 'liga', 'clig', 'kern';
 }
 
+#selectProtocolWrapper{
+	position: fixed;
+	top: 35px;
+	left: 10px;
+}
+#selectProtocol-button{
+	width: 500px;
+}
+
+
 header {
 	position: fixed;
 	top: 0px;
