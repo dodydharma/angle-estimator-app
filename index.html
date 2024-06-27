@@ -71,11 +71,12 @@
 		</div>
 
 		<div id="protocolA" title="PROTOCOL A - Coronal plane alignment measurement protocol." >
-<!--			<h3 class="ui-widget-header ui-corner-all">Coronal plane alignment measurement protocol.</h3>-->
 				<form>
 					<fieldset>
-						<button id="goBackwardButton">Undo</button>
-						<button id="goForwardButton">Go next</button>
+						<button id="goBackwardButton">Undo (<em><small>keyboard: backspace </small></em>)</button>
+						<button id="goForwardButton">Go next (<em><small>keyboard: space </small></em>)</button>
+						<input type="checkbox" id="isAutoForward" name="isAutoForward" />
+						<label for="isAutoForward">Go Next Automatically </label>
 					</fieldset>
 				</form>
 			<ol>
@@ -97,6 +98,15 @@
 		</div>
 		<div id="protocolB" title="PROTOCOL B - Posterior tibial slope measurement protocol">
 <!--			<h3 class="ui-widget-header ui-corner-all">Posterior tibial slope measurement protocol</h3>-->
+			<form>
+				<fieldset>
+					<button id="goBackwardButtonB">Undo (<em><small>keyboard: backspace </small></em>)</button>
+					<button id="goForwardButtonB">Go next (<em><small>keyboard: space </small></em>)</button>
+					<input type="checkbox" id="isAutoForwardB" name="isAutoForward" />
+					<label for="isAutoForwardB">Go Next Automatically </label>
+				</fieldset>
+			</form>
+
 			<ol >
 				<li id="procedureB0" >Line 1 is drawn tangential to the deepest point of the medial tibial plateau depression</li>
 				<li id="procedureB1" >Circle &alpha; is drawn with the centre just distal to the tibial tuberosity so that it is simultaneously tangent to the anterior and posterior outer cortices</li>

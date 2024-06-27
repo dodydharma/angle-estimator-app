@@ -31,6 +31,11 @@ let intersectionLabelGroup;
 // memory for current drawing operation
 let line;
 let circle;
+let intersectionArc
+let intersectionPoint
+let intersectionAngle
+let intersectionLabel
+let invertAngleDirection = false
 
 let cursor;
 let originClickPosition;
@@ -78,8 +83,6 @@ $( "#freeDraw" ).on( "click", function(event) {
 	event.preventDefault();
 })
 
-
-
 // Check the draw mode line,circle, or point
 function getDrawMode() {
 	return $('input[name=drawmode]:checked', '#drawmode').val();
@@ -104,10 +107,40 @@ $("#picker").colorPick({
 // Undo functionality
 let lastShape;
 let lastLabel;
+let lastShapeName;
+let lastShapeCenter;
+
+let lastIntersectionArc
+let lastIntersectionPoint
+let lastIntersectionAngle
+let lastIntersectionLabel
+
 $("#undo").button();
 $("#undo" ).button( "option", "disabled", true );
 
+
 $("#undo" ).on( "click", function( event ) {
+	executeUndo();
+	event.preventDefault();
+} );
+
+
+function activateUndo(){
+	lastShape = circle?  circle: line
+	lastLabel = currentLabel
+	lastShapeName = currentShapeName
+	lastShapeCenter = currentShapeCenter
+
+	lastIntersectionArc =  intersectionArc
+	lastIntersectionPoint = intersectionPoint
+	lastIntersectionAngle =  intersectionAngle
+	lastIntersectionLabel = intersectionLabel
+
+	$( "#undo" ).button( "option", "disabled", false );
+}
+
+function executeUndo(){
+	console.log("execute Undo")
 	if(lastLabel){
 		lastLabel.destroy()
 		lastLabel = null
@@ -118,14 +151,35 @@ $("#undo" ).on( "click", function( event ) {
 		lastShape = null
 	}
 
-	$( "#undo" ).button( "option", "disabled", true );
-	event.preventDefault();
-} );
+	if(lastShapeCenter){
+		lastShapeCenter.destroy()
+		lastShapeCenter = null
+	}
 
-function activateUndo(){
-	circle? lastShape = circle: lastShape = line
-	lastLabel = currentLabel
-	$( "#undo" ).button( "option", "disabled", false );
+	if(lastShapeName){
+		lastShapeName = null
+	}
+
+	console.log("intersectionGroup.getChildren()", intersectionGroup.getChildren(),  lastIntersectionArc )
+
+	if(lastIntersectionArc){
+		lastIntersectionArc.destroy()
+		lastIntersectionArc = null
+	}
+	if(lastIntersectionPoint){
+		lastIntersectionPoint.destroy()
+		lastIntersectionPoint = null
+	}
+	if(lastIntersectionAngle){
+		lastIntersectionAngle.destroy()
+		lastIntersectionAngle = null
+	}
+	if(lastIntersectionLabel){
+		lastIntersectionLabel.destroy()
+		lastIntersectionLabel = null
+	}
+
+	$( "#undo" ).button( "option", "disabled", true );
 }
 
 // listen for the file input change event and load the image.
@@ -175,6 +229,96 @@ $('#checkboxWrapperisFullSize :checkbox').change(function() {
 		$( "#slider" ).show()
 	initialize()
 });
+
+let isWaitingForUpdateProtocol = false
+
+
+$( "#goForwardButtonA" ).on( "click", function(event) {
+	if(isWaitingForUpdateProtocol){
+		console.log("updateProtocol")
+		updateProtocol();
+	}
+	event.preventDefault();
+});
+$("#goForwardButtonA" ).prop('disabled', true);
+
+$( "#goForwardButtonB" ).on( "click", function(event) {
+	if(isWaitingForUpdateProtocol){
+		console.log("updateProtocol")
+		updateProtocol();
+	}
+	event.preventDefault();
+});
+$("#goForwardButtonB" ).prop('disabled', true);
+
+
+$( "#goBackwardButton" ).on( "click", function(event) {
+	if(isWaitingForUpdateProtocol){
+		executeUndo();
+	}
+	event.preventDefault();
+});
+$("#goBackwardButtonA" ).prop('disabled', true);
+$( "#goBackwardButtonB" ).on( "click", function(event) {
+	if(isWaitingForUpdateProtocol){
+		executeUndo();
+	}
+	event.preventDefault();
+});
+$("#goBackwardButtonB" ).prop('disabled', true);
+
+let autoForward =  false;
+// let autoForward =  $("#isAutoForward").is(":checked");
+$('#isAutoForwardA').change(function() {
+	autoForward = this.checked
+	if(autoForward)
+		$("#goForwardButtonA" ).prop('disabled', true);
+	else if(isWaitingForUpdateProtocol)
+		$("#goForwardButtonA" ).prop('disabled', false);
+
+});
+$("#goForwardButtonA" ).prop('disabled', autoForward);
+
+$('#isAutoForwardB').change(function() {
+	autoForward = this.checked
+	if(autoForward)
+		$("#goForwardButtonB" ).prop('disabled', true);
+	else if(isWaitingForUpdateProtocol)
+		$("#goForwardButtonB" ).prop('disabled', false);
+
+});
+$("#goForwardButtonB" ).prop('disabled', autoForward);
+
+
+
+
+window.addEventListener('keydown',function (e) {
+		console.log("keyboard pressed", e.keyCode, "is waiting ", isWaitingForUpdateProtocol)
+
+		if(e.keyCode == 32){ // space
+			if(isWaitingForUpdateProtocol){
+				console.log("updateProtocol")
+				updateProtocol();
+			}
+		}else if(e.keyCode == 8){ // backspace
+			if(isWaitingForUpdateProtocol){
+				executeUndo();
+			}
+		}else if(e.keyCode == 37){ // left
+			if(isWaitingForUpdateProtocol){
+				redrawInvertedIntectionAngle(runProtocol())
+			}
+		}else if(e.keyCode == 39){ // right
+			if(isWaitingForUpdateProtocol){
+				redrawInvertedIntectionAngle(runProtocol())
+			}
+		}
+
+		e.preventDefault();
+	},
+	false);
+
+
 
 function downloadURI(uri, name) {
 	var link = document.createElement('a');
@@ -231,8 +375,8 @@ function startDrawLine(xF,yF, xT,yT, color, customLabel='', dashed=false){
 	currentShapeCenter = new Konva.Circle({
 		x: xF,
 		y: yF,
-		radius: 1,
-		stroke: 'black',
+		radius: 2,
+		stroke: 'yellow',
 		fill: 'black',
 		name: 'center-'+currentShapeName,
 		id:'center-'+currentShapeName,
@@ -247,6 +391,8 @@ function startDrawLine(xF,yF, xT,yT, color, customLabel='', dashed=false){
 		fontSize: 13,
 		fontFamily: 'Calibri',
 		fill: color?color:lineColor,
+		stroke: 'black',
+		strokeWidth: 0.2,
 		align: 'left',
 		id:'label-line-'+(lineGroup.children.length+1)
 	});
@@ -258,6 +404,7 @@ function startDrawLine(xF,yF, xT,yT, color, customLabel='', dashed=false){
 		dashedLineGroup.add(line)
 	else lineGroup.add(line);
 
+	console.log("activate undo draw line")
 	activateUndo();
 
 	return [line, currentShapeCenter, currentLabel];
@@ -285,8 +432,8 @@ function createCircle(x,y,r, color='red', customLabel=''){
 	currentShapeCenter = new Konva.Circle({
 		x: x,
 		y: y,
-		radius: 1,
-		stroke: 'black',
+		radius: 2,
+		stroke: 'yellow',
 		fill: 'black',
 		name: 'center-'+currentShapeName,
 		id:'center-'+currentShapeName,
@@ -302,6 +449,8 @@ function createCircle(x,y,r, color='red', customLabel=''){
 		fontSize: 13,
 		fontFamily: 'Calibri',
 		fill: color,
+		stroke: 'black',
+		strokeWidth: 0.2,
 		align: 'center',
 		id:'label-'+currentShapeName
 	});
@@ -311,6 +460,11 @@ function createCircle(x,y,r, color='red', customLabel=''){
 	labelGroup.add(currentLabel)
 
 	circle.on('mousedown', (e) => {
+		// if(isWaitingForUpdateProtocol){
+		// 	executeUndo()
+		// 	return false
+		// }
+
 		if(drawmode == 'line')
 		{
 			// get circle's center coordinate relative to the Image
@@ -318,6 +472,7 @@ function createCircle(x,y,r, color='red', customLabel=''){
 			originClickPosition = pos;
 			startDrawLine(pos.x, pos.y, pos.x, pos.y,shapeColor);
 
+			console.log("activate undo")
 		}else if(drawmode == 'delete'){
 			e.target.destroy()
 			labelGroup.getChildren().forEach(deleteTargetLabel);
@@ -325,11 +480,14 @@ function createCircle(x,y,r, color='red', customLabel=''){
 				if(label.text() == e.target.name())
 					label.destroy();
 			}
+			console.log("activate undo")
 		}
 
-		activateUndo();
 
 	});
+
+	console.log("activate undo draw circle")
+	activateUndo();
 
 	return [circle, currentShapeCenter, currentLabel];
 }
@@ -384,7 +542,6 @@ function initialize(){
 		labelGroup                = new Konva.Group();    imageLayer.add(labelGroup)
 		intersectionGroup         = new Konva.Group();    imageLayer.add(intersectionGroup)
 		intersectionLabelGroup    = new Konva.Group();    imageLayer.add(intersectionLabelGroup)
-
 
 		Konva.Image.fromURL('images/target-cursor.png',
 			function (img ) {
@@ -496,6 +653,9 @@ function initialize(){
 			updateCursor()
 			originClickPosition = mouseCurrentPosition;
 
+			console.log('isWaitingForUpdateProtocol :',isWaitingForUpdateProtocol )
+
+
 			var currentAction = runProtocol()
 			console.log("current action ", currentAction)
 
@@ -523,6 +683,10 @@ function initialize(){
 				console.log("End of protocol")
 
 			}else{
+				if(isWaitingForUpdateProtocol){
+					executeUndo()
+				}
+
 				console.log("Execute Protocol of step ", stateProcedure.currentSteps , currentAction)
 				drawmode = currentAction.action
 				if(drawmode == 'circle')
@@ -539,9 +703,20 @@ function initialize(){
 				{
 					startDrawLine(mouseCurrentPosition.x, mouseCurrentPosition.y, mouseCurrentPosition.x, mouseCurrentPosition.y, shapeColor, currentAction.label);
 				}
+
+
+				if(drawmode == 'projectPointToALine')
+				{
+					var ln = stateProcedure.procedures[currentAction.from].data[0] //getLine
+					p = findPointProjectionInALine([mouseCurrentPosition.x, mouseCurrentPosition.y], ln.points())
+					console.log("projection of points ", [mouseCurrentPosition.x, mouseCurrentPosition.y], " to line ", ln.points(), "is at ", p)
+					createCircle(p[0], p[1],3, shapeColor, currentAction.label )
+				}
+
+				if(drawmode == 'computeAngle'){
+					redrawInvertedIntectionAngle(currentAction)
+				}
 			}
-
-
 
 		});
 
@@ -600,12 +775,18 @@ function initialize(){
 
 		stage.on('mouseup', (e) => {
 			if(validateShape() == true){
-				isWaitingForUpdateProtocol = true;
-				updateProtocol();
+				if(stateProcedure.procedures.length > 0 && stateProcedure.currentSteps < stateProcedure.procedures.length){
+					storeDataToCurrentProcedure(lastShape,lastShapeCenter,lastShapeName )
+				}
+
+				if(autoForward) {
+					console.log("updateProtocol after validate shape");
+					updateProtocol()
+				}else{
+					waitingForUpdateProtocol();
+				}
 			}
 
-
-			activateUndo()
 			imageLayer.draw();
 
 			// clear memory
@@ -613,26 +794,41 @@ function initialize(){
 			circle = null;
 			currentLabel = null;
 			currentShapeName = null;
+			currentShapeCenter = null;
+			intersectionArc =  null;
+			intersectionPoint = null;
+			intersectionAngle =  null;
+			intersectionLabel = null;
+
 		});
 
+
 		function validateShape(){
-			console.log("validate ", drawmode)
-			if(drawmode == 'line'){
+			var result = true;
+			if(line && drawmode == 'line'){
 				ln = line.points()
 				if(math.distance([ln[0], ln[1]], [ln[2],ln[3]]) <= 0){
 					cancelDraw()
+					console.log("validate ", drawmode, false)
 					return false;
 				}
 			}
 
-			if(drawmode == 'circle'){
+			if(circle && drawmode == 'circle'){
 				console.log('radius ', circle.radius())
 				if(circle.radius() <= 3){
 					cancelDraw()
+					console.log("validate ", drawmode, false)
 					return false;
 				}
 			}
 
+			if(drawmode == 'computeAngle'){
+				console.log("validate ", drawmode, false)
+				return false;
+			}
+
+			console.log("validate ", drawmode, true)
 			return true;
 		}
 
@@ -642,15 +838,15 @@ function initialize(){
 			if  (circle) circle.destroy();currentShapeCenter.destroy(); currentLabel.destroy();
 		}
 
-		$( "#goForwardButton" ).on( "click", function(event) {
-			if(isWaitingForUpdateProtocol){
-				updateProtocol();
-			}
-			event.preventDefault();
-		});
-
 
 	}
+}
+
+function waitingForUpdateProtocol()
+{
+	console.log("waitingForUpdateProtocol , draw mode", drawmode)
+	isWaitingForUpdateProtocol = true;
+	$("#goForwardButton" ).prop('disabled', false);
 }
 
 function isShowBoundingBox(show=false){
@@ -739,7 +935,7 @@ function isIntersects(a,b,c,d,p,q,r,s) {
 	}
 };
 
-function findLineIntersections(){
+function findLineIntersections(invert = false){
 	var lines = lineGroup.getChildren();
 	lines.forEach(checkEveryLine);
 	function checkEveryLine(currentLine, currentLineIndex, otherLines) {
@@ -747,13 +943,13 @@ function findLineIntersections(){
 		function checkIntersection(otherLine, otherLineIndex, array) {
 			// don't compare to self and only compare once
 			if(currentLineIndex >  otherLineIndex){
-				findTwoLinesIntersection(currentLine,otherLine)
+				findTwoLinesIntersection(currentLine,otherLine, false, '' , invert)
 			}
 		}
 	}
 }
 
-function findTwoLinesIntersection(currentLine,otherLine, inCludeOutSideLineRange = false, label= ''){
+function findTwoLinesIntersection(currentLine,otherLine, inCludeOutSideLineRange = false, label= '', invert=false){
 	var xy1 = currentLine.points();
 	var xy2 = otherLine.points();
 	var isIntersX = isIntersects(xy1[0], xy1[1], xy1[2], xy1[3], xy2[0], xy2[1], xy2[2], xy2[3])
@@ -763,41 +959,43 @@ function findTwoLinesIntersection(currentLine,otherLine, inCludeOutSideLineRange
 		var itxID = currentLine.id()+'-'+otherLine.id()
 		found = stage.find('#'+itxID)[0];
 		if(!found){
-			generateIntersectionData(currentLine, otherLine)
+			return generateIntersectionData(currentLine, otherLine, invert)
 		}
 	}else if(inCludeOutSideLineRange){
 		var pointOfIntersection = math.intersect([xy1[0], xy1[1]], [xy1[2], xy1[3]], [xy2[0], xy2[1]], [xy2[2], xy2[3]])
 		console.log("pointOfIntersection outside line",pointOfIntersection, label)
 		// createCircle(pointOfIntersection[0],pointOfIntersection[1],5,'red')
-		generateIntersectionData(currentLine, otherLine, inCludeOutSideLineRange, label)
+		return generateIntersectionData(currentLine, otherLine, inCludeOutSideLineRange, label, invert)
 	}
 
 }
 
 
-function generateIntersectionData(firstLine, secondLine, inCludeOutSideLineRange= false, label=''){
+function generateIntersectionData(firstLine, secondLine, inCludeOutSideLineRange= false, label='', invert=false){
+	console.log("  Generate Intersection Data with invert =", invert)
 	var xy1 = firstLine.points();
 	var xy2 = secondLine.points();
 
 	var pointOfIntersection = math.intersect([xy1[0], xy1[1]], [xy1[2], xy1[3]], [xy2[0], xy2[1]], [xy2[2], xy2[3]])
 
-	var intersectionAngle = getIntersectionAngle(xy1, pointOfIntersection, xy2)
 	var intersectionResultant = getIntersectionResultant(xy1, pointOfIntersection, xy2)
 	//var horizonAngle = getHorizonAngle(xy1, pointOfIntersection, xy2)
-	var horizontalvector = getHorizonVector(xy1, pointOfIntersection, xy2)
-
-	console.log('intersaection custon label', label)
-	createIntersectionPoint(pointOfIntersection[0],pointOfIntersection[1],2, firstLine.id(), secondLine.id(),
-		intersectionAngle, intersectionResultant, horizontalvector, shapeColor, label)
+	var horizontalvector = getHorizonVector(xy1, pointOfIntersection, xy2, invert)
+	var verticalVector = getVerticalVector(xy1, pointOfIntersection, xy2)
+	// var intersectionAngle = getIntersectionAngle(xy1, pointOfIntersection, xy2)
+	var intersectionAngle = findAngle3PointsInDegree(horizontalvector, pointOfIntersection, verticalVector)
+	// console.log('horizontalvector, pointOfIntersection, verticalVector, intersectionAngle, invert', horizontalvector, pointOfIntersection, verticalVector, intersectionAngle,invert)
 
 	if(inCludeOutSideLineRange){
-		fp1 = getFurthestPointFrom(xy1, pointOfIntersection)
-		startDrawLine(fp1[0], fp1[1], pointOfIntersection[0], pointOfIntersection[1],shapeColor,'',true)
-		fp2 =getFurthestPointFrom(xy2, pointOfIntersection)
-		startDrawLine(fp2[0], fp2[1], pointOfIntersection[0], pointOfIntersection[1],shapeColor,'',true)
+		startDrawLine(verticalVector[0], verticalVector[1], pointOfIntersection[0], pointOfIntersection[1],shapeColor,'',true)
+		startDrawLine(horizontalvector[0], horizontalvector[1], pointOfIntersection[0], pointOfIntersection[1],shapeColor,'',true)
 	}
 
-	console.log('new intersection at', pointOfIntersection, firstLine.id(), secondLine.id())
+	var data = createIntersectionPoint(pointOfIntersection[0],pointOfIntersection[1],2, firstLine.id(), secondLine.id(),
+		intersectionAngle, intersectionResultant, horizontalvector, shapeColor, label)
+
+
+	return data
 }
 
 // return angle in degree
@@ -805,26 +1003,38 @@ function getIntersectionAngle(l1, pointOfIntersection, l2){
 	var P1furthestPoint = getFurthestPointFrom(l1, pointOfIntersection)
 	var P2furthestPoint = getFurthestPointFrom(l2, pointOfIntersection)
 
-	var angle = findAngle3Points(P1furthestPoint[0],P1furthestPoint[1],
+	var angleInDegree = findAngle3PointsInDegree(P1furthestPoint[0],P1furthestPoint[1],
 		pointOfIntersection[0],pointOfIntersection[1],
 		P2furthestPoint[0],P2furthestPoint[1])
 
-	return angle * 180 / Math.PI
+	return angleInDegree
 }
 
-function getIntersectionResultant(l1, pItx, l2){
+
+
+function getIntersectionResultant(l1, pItx, l2, invert = false){
 	var p1f = getFurthestPointFrom(l1, pItx)
 	var p2f = getFurthestPointFrom(l2, pItx)
 
-	var d1x = p1f[0] - pItx[0];
-	var d2x = p2f[0] - pItx[0];
 	var d1y = p1f[1] - pItx[1];
 	var d2y = p2f[1] - pItx[1]
+
+	// check whic is horizon first
+	if (math.abs(d2y) < math.abs(d1y)){
+		if (invert)
+			p2f =  getFurthestPointFrom(l2, pItx, invert)
+	}else{
+		if(invert)
+			p1f = getFurthestPointFrom(l1, pItx, invert)
+	}
+
+	var d1x = p1f[0] - pItx[0];
+	var d2x = p2f[0] - pItx[0];
 
 	return [d1x+d2x, d1y+d2y]
 }
 
-function getHorizonVector(l1, pItx, l2) {
+function getHorizonVector(l1, pItx, l2, invert= false) {
 	var p1f = getFurthestPointFrom(l1, pItx)
 	var p2f = getFurthestPointFrom(l2, pItx)
 
@@ -833,19 +1043,49 @@ function getHorizonVector(l1, pItx, l2) {
 	var d1y = p1f[1] - pItx[1];
 	var d2y = p2f[1] - pItx[1]
 
-	var refPoint = p1f
-	if (math.abs(d2y) < math.abs(d1y))
-		refPoint = p2f
+	if (math.abs(d2y) < math.abs(d1y)){
+		if (invert)
+			return getFurthestPointFrom(l2, pItx, invert)
+		return p2f
+	}
 
-	return refPoint
+	if (invert)
+		return getFurthestPointFrom(l1, pItx, invert)
+	return p1f
+
 }
 
-function getFurthestPointFrom(l, pIntersect){
-	if ( math.distance([l[0], l[1]], [pIntersect[0], pIntersect[1]]) >=
-		math.distance([l[2], l[3]], [pIntersect[0], pIntersect[1]]))
+function getVerticalVector(l1, pItx, l2) {
+	var p1f = getFurthestPointFrom(l1, pItx)
+	var p2f = getFurthestPointFrom(l2, pItx)
+
+	var d1x = p1f[0] - pItx[0];
+	var d2x = p2f[0] - pItx[0];
+	var d1y = p1f[1] - pItx[1];
+	var d2y = p2f[1] - pItx[1]
+
+	if (math.abs(d2y) > math.abs(d1y)){
+		return p2f
+	}
+
+	return p1f
+}
+
+
+function getFurthestPointFrom(l, pIntersect, invert= false){
+	var compareDistance = math.distance([l[0], l[1]], [pIntersect[0], pIntersect[1]]) >=
+		math.distance([l[2], l[3]], [pIntersect[0], pIntersect[1]])
+
+	if ( compareDistance){
+		if (invert)
+			return [l[2], l[3]]
 		return [l[0], l[1]]
-	else
+	}
+	else{
+		if (invert)
+			return [l[0], l[1]]
 		return [l[2], l[3]]
+	}
 }
 
 // p1 the corner , find angle 2 points in radian
@@ -853,6 +1093,11 @@ function findAngle2Points(p1x,p1y,p2x,p2y) {
 	return  Math.atan2(p2y - p1y, p2x - p1x)* 180 / Math.PI;;
 }
 
+function findAngle3PointsInDegree(p0,p1,p2){
+	var angle = findAngle3Points(p0[0],p0[1],p1[0],p1[1],p2[0],p2[1])
+	angleInDegree = angle * 180 / Math.PI
+	return angleInDegree
+}
 // p1 the corner , find angle in radian
 function findAngle3Points(p0x,p0y,p1x,p1y,p2x,p2y) {
 	var a = Math.pow(p1x-p0x,2) + Math.pow(p1y-p0y,2),
@@ -862,45 +1107,63 @@ function findAngle3Points(p0x,p0y,p1x,p1y,p2x,p2y) {
 	return Math.acos( (a+b-c) / Math.sqrt(4*a*b) );
 }
 
+function findPointProjectionInALine(point, line){
+
+	abx = line[2]-line[0];
+	aby = line[3]-line[1]
+	acx = point[0]-line[0]
+	acy = point[1]-line[1]
+
+	coeff = (abx*acx + aby*acy) / (abx*abx+aby*aby)
+	dx = line[0] + abx * coeff
+	dy = line[1] + aby * coeff
+
+	return [dx,dy]
+}
+
 // Primitive Function
-function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizonVector, shapecolor='', customlabel=''){
+function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizonVector, shapecolor='', customlabel='', invert = false){
 
 	// convert Point Index to alphabet character, 1, 2,3 to  point A, point B, point C
-	var pointIndex =intersectionGroup.getChildren().length+1
+	var pointIndex = intersectionGroup.getChildren().length+1
 	var pointIndexInAlphacharacter = (pointIndex + 9).toString(36).toUpperCase();
 	var color = shapeColor==''? 'red':shapeColor
 	var intersectionName= 'itx-'+pointIndexInAlphacharacter;
 
-	var intersectionPoint = new Konva.Circle({
-		x: x ,
-		y: y ,
-		radius: 3,
-		stroke: color,
-		name: 'itx-'+l1name+'-'+l2name,
-		id:l1name+'-'+l2name,
-	});
-	intersectionGroup.add(intersectionPoint);
 
 	// Draw Arc
-	var xDirection = (horizonVector[0]-x)>= 0? 1: -1
 	var yDirection = resultant[1]>= 0? 1: -1
+	var xDirection = (horizonVector[0]-x)>= 0? 1: -1
 	let rotation = findAngle2Points(x,y, horizonVector[0],horizonVector[1])
 	if ( xDirection != yDirection ) { // x Axis and yAxis not equally positive or negative
 		rotation = rotation-angle
 	}
 
-	var intersectionArc = new Konva.Arc({
+	intersectionArc = new Konva.Arc({
 		x:x,
 		y:y,
 		innerRadius: 0,
 		outerRadius: 50,
 		rotation:rotation,
 		angle: angle,
-		// fill: 'yellow',
-		stroke: color,
+		fill: 'yellow',
+		opacity: 0.5,
+		stroke: 'black',
 		strokeWidth: 2,
+		dash: [3,4]
 	});
 	intersectionGroup.add(intersectionArc);
+
+	intersectionPoint = new Konva.Circle({
+		x: x ,
+		y: y ,
+		radius: 2,
+		stroke: 'yellow',
+		fill: 'black',
+		name: 'itx-'+l1name+'-'+l2name,
+		id:l1name+'-'+l2name,
+	});
+	intersectionGroup.add(intersectionPoint);
 
 	// var horizonVectorLine = new Konva.Line({
 	//   stroke: 'red',
@@ -910,41 +1173,98 @@ function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizo
 	// });
 	// intersectionGroup.add(horizonVectorLine);
 
-	var intersectionAngle = new Konva.Text({
+	intersectionAngle = new Konva.Text({
 		x: x,
 		y: y,
 		text: angle.toFixed(2)+'°',
-		fontSize: 13,
+		fontSize: 14,
 		fontFamily: 'Calibri',
 		fill: color,
+		stroke: 'black',
+		strokeWidth: 0.2,
 		align: 'left',
 		id:'angle-itx-'+l1name+'-'+l2name,
-		name: 'angle-itx-'+l1name+'-'+l2name
+		name: 'angle-itx-'+l1name+'-'+l2name,
+
 	});
 	intersectionAngle.x(x - intersectionAngle.width()/2  + 20* xDirection)
 	intersectionAngle.y(y - intersectionAngle.height()/2 + 20* yDirection)
 	intersectionLabelGroup.add(intersectionAngle)
 
-	var itxlabel = 'itx-'+pointIndexInAlphacharacter+'-L('+l1name.replace('line-','')+','+l2name.replace('line-','')+')'
-	if( customlabel != '' )
-		itxlabel = customlabel
-	var intersectionLabel = new Konva.Text({
+	intersectionLabel  = new Konva.Label({
 		x: x,
 		y: y,
-		text: itxlabel,
-		fontSize: 12,
-		fontFamily: 'Calibri',
-		fill: color,
-		align: 'center',
-		id:'label-itx-'+l1name+'-'+l2name,
-		name: 'label-itx-'+l1name+'-'+l2name
+		opacity: 0.75,
 	});
 
-	intersectionLabel.x(x - (8+intersectionLabel.width()/2)*xDirection)
-	intersectionLabel.y(y - (8+intersectionLabel.height()/2)*yDirection)
+	intersectionLabel.add(
+		new Konva.Tag({
+			fill: 'yellow',
+			pointerDirection: yDirection < 0? 'up':'down',
+			pointerWidth: 15,
+			pointerHeight: 7,
+			lineJoin: 'round',
+			shadowColor: 'black',
+			shadowBlur: 10,
+			shadowOffsetX: 5,
+			shadowOffsetY: 5,
+			shadowOpacity: 0.5,
+			stroke:'red',
+			strokeWidth:0.5,
+			dash:[2,2],
+		})
+	);
+
+	var itxlabel = ' intersection-'+pointIndexInAlphacharacter+'-L('+l1name.replace('line-','')+','+l2name.replace('line-','')+') '
+	if( customlabel != '' )
+		itxlabel = ' '+customlabel+' '
+
+	intersectionLabel.add(
+		new Konva.Text({
+			// x: x,
+			// y: y,
+			text: itxlabel,
+			fontSize: 14,
+			fontFamily: 'Calibri',
+			fill: color,
+			stroke: 'black',
+			strokeWidth:0.3,
+			align: 'center',
+			id:'label-itx-'+l1name+'-'+l2name,
+			name: 'label-itx-'+l1name+'-'+l2name
+		})
+	);
+
+	intersectionLabel.x(x )//- (8+intersectionLabel.width()/2)*xDirection)
+	intersectionLabel.y(y )//- (8+intersectionLabel.height()/2)*yDirection)
 	intersectionLabelGroup.add(intersectionLabel)
+
+
+	activateUndo()
+
+	return [ intersectionArc, intersectionPoint, intersectionLabel, intersectionAngle];
 }
 
+function redrawInvertedIntectionAngle(targetProcedure)
+{
+	console.log("targetProcedure", targetProcedure)
+	if(targetProcedure.action == "computeAngle"){
+		if(isWaitingForUpdateProtocol)
+			executeUndo()
+
+		invertAngleDirection = !invertAngleDirection
+		console.log(" invertAngleDirection", invertAngleDirection)
+		console.log(target.mode, target.from, target.to)
+		var line1 = stateProcedure.procedures[target.from].data[0] //getShape
+		var line2 = stateProcedure.procedures[target.to].data[0] //getShape
+		console.log(line1, line2)
+		var data = findTwoLinesIntersection(line1, line2, true, ''+target.label , invertAngleDirection)
+		storeDataToCurrentProcedure(data[0], data[1], data[2], data[4]);
+		console.log("activate undo compute angle Fliped Arc")
+		activateUndo()
+	}
+
+}
 
 /**
  *  Procedure to Run Protocol
@@ -958,10 +1278,10 @@ const procedureASteps = [
 	{name: "procedureA5", action:"line", 	label:"2", mode:"connectPoints",  from:3, to:4,  desc:"Points C and D are connected to form Line 2 (femoral knee joint orientation line)"},
 	{name: "procedureA6", action:"computeAngle", label:"mLDFA", mode:"computeAngle", from:2, to:5,  desc:"The lateral angle between Lines 1 and 2 is the mechanical lateral distal femoral angle (mLDFA)"},
 	{name: "procedureA7", action:"line", 	label:"3",  desc:"Line 3 (tibial knee joint orientation line) is the line of best fit between the medial and lateral tibial plateaus"},
-	{name: "procedureA8", action:"computeMidPoint", 	mode:"computeMidPoint", from:7,	label:"E",  desc:"The centre of the tibial interspinous groove is marked as point E"},
+	{name: "procedureA8", action:"projectPointToALine", 	mode:"projectPointToALine", from:7,	label:"E",  desc:"The centre of the tibial interspinous groove is marked as point E"},
 	{name: "procedureA9", action:"point", 	label:"F",  desc:"The medial limit of the talar dome articular surface is marked as point F"},
 	{name: "procedureA10", action:"point", 	label:"G",  desc:"The lateral limit of the talar dome articular surface is marked as point G"},
-	{name: "procedureA11", action:"point", 	mode:"computeMidPoint", from:9, to:10, label:"H",  desc:"The midpoint between points F and G is marked as point H"},
+	{name: "procedureA11", action:"computeMidPoint", 	mode:"computeMidPoint", from:9, to:10, label:"H",  desc:"The midpoint between points F and G is marked as point H"},
 	{name: "procedureA12", action:"line", 	label:"1", mode:"connectPoints", from:8, to:11,		label:"A",  desc:"Points E and H are connected to form Line 4"},
 	{name: "procedureA13", action:"computeAngle", label:"mLDFA", mode:"computeAngle", from:7, to:12, label:"mMPTA",  desc:"The medial angle between lines 3 and 4 is the mechanical medial proximal tibial angle (mMPTA)"},
 ]
@@ -1048,14 +1368,22 @@ function getPointFromProcedure(proc)
 
 function moveToNextProcedure()
 {
-	console.log("stateProcedure.procedures.length ", stateProcedure.procedures.length)
-	if(stateProcedure.procedures.length > 0 && stateProcedure.currentSteps <stateProcedure.procedures.length-1)
-	{
+	console.log("moveToNextProcedure()")
+	var pendingMoveToNextProcedure = false;
+
+	if(stateProcedure.procedures.length > 0){
 		stateProcedure.currentSteps += 1
+	}
+
+	if(stateProcedure.currentSteps <stateProcedure.procedures.length-1)
+	{
+		console.log("stateProcedure.procedures.length ", stateProcedure.procedures.length, " stateProcedure.currentSteps ", stateProcedure.currentSteps)
 
 		target = stateProcedure.procedures[stateProcedure.currentSteps]
 		console.log("target action :",target.action, drawmode)
+
 		if(target.mode == "connectPoints"){
+			drawmode = target.mode
 			console.log(target.mode, target.from, target.to)
 			var Point1 = stateProcedure.procedures[target.from].data[1] //getShapeCenter
 			var Point2 = stateProcedure.procedures[target.to].data[1] //getShapeCenter
@@ -1064,19 +1392,26 @@ function moveToNextProcedure()
 			highlightStepProtocol(stateProcedure.currentSteps, true)
 			moveToNextProcedure()
 		}else if(target.mode == "computeAngle"){
+			drawmode = target.mode
 			console.log(target.mode, target.from, target.to)
 			console.log("from", stateProcedure.procedures[target.from].data)
 			console.log("to", stateProcedure.procedures[target.to].data)
 			var line1 = stateProcedure.procedures[target.from].data[0] //getShape
 			var line2 = stateProcedure.procedures[target.to].data[0] //getShape
-			console.log("line1, line1", line1.points(), line2.points(), target.label)
-			findTwoLinesIntersection(line1, line2, true, ''+target.label )
+			var data = findTwoLinesIntersection(line1, line2, true, ''+target.label , invertAngleDirection)
+			storeDataToCurrentProcedure(data[0], data[1], data[2], data[4]);
+			console.log("activate undo on compute angle target mode")
 			highlightStepProtocol(stateProcedure.currentSteps, true)
-			moveToNextProcedure()
-			return;
+
+			if(autoForward){
+				moveToNextProcedure()
+			}else{
+				waitingForUpdateProtocol()
+			}
 		}else if(target.mode == "computeMidPoint"){
-			console.log(target.mode, target.from, target.to)
-			if(target.from){
+			drawmode = target.mode
+			console.log(target.mode, target.from, target.to, ' is Autoforward :', autoForward)
+			if( target.from){
 				var cF = stateProcedure.procedures[target.from].data[1] //getShapeCenter
 				lx = cF.x(), ly = cF.y()
 				if(target.to){
@@ -1085,15 +1420,32 @@ function moveToNextProcedure()
 					ly = ly + (cT.y()-ly)/2
 
 					startDrawLine(cF.x(), cF.y(), cT.x(), cT.y(),shapeColor,'',true)
-
 				}
 
-
 				var data = createCircle(lx, ly,3, shapeColor, target.label )
+
 				storeDataToCurrentProcedure(data[0], data[1], data[2]);
 				highlightStepProtocol(stateProcedure.currentSteps, true)
 				moveToNextProcedure()
 			}
+
+		}else if(target.mode == "projectPointToALine"){
+			drawmode = target.mode
+			console.log(target.mode, target.from, target.to, ' is Autoforward :', autoForward)
+			if( target.from){
+				var cF = stateProcedure.procedures[target.from].data[1] //getShapeCenter
+				lx = cF.x(), ly = cF.y()
+				var data = createCircle(lx, ly,3, shapeColor, target.label )
+				storeDataToCurrentProcedure(data[0], data[1], data[2]);
+				highlightStepProtocol(stateProcedure.currentSteps, true)
+			}
+			if(autoForward){
+				moveToNextProcedure()
+			}else{
+				waitingForUpdateProtocol()
+			}
+		}else{
+			stopWaitingForUpdateProtocol()
 		}
 
 	}
@@ -1102,28 +1454,22 @@ function moveToNextProcedure()
 
 }
 
-function storeDataToCurrentProcedure(shape, shapeCenter, shapeName)
+function stopWaitingForUpdateProtocol()
 {
-	stateProcedure.procedures[stateProcedure.currentSteps].data = [ shape, shapeCenter, shapeName]
+	console.log("stopWaitingForUpdateProtocol() ",isWaitingForUpdateProtocol )
+	isWaitingForUpdateProtocol = false
+}
+
+function storeDataToCurrentProcedure(shape, shapeCenter, shapeName, shapeValue=null)
+{
+	stateProcedure.procedures[stateProcedure.currentSteps].data = [ shape, shapeCenter, shapeName, shapeValue]
 }
 
 function updateProtocol()
 {
-	if(stateProcedure.procedures.length > 0 && stateProcedure.currentSteps < stateProcedure.procedures.length){
-		if(drawmode == 'line'){
-			storeDataToCurrentProcedure(line,currentShapeCenter,currentShapeName )
-		}else if(drawmode == 'circle'){
-			storeDataToCurrentProcedure(circle,currentShapeCenter,currentShapeName )
-		}else if(drawmode == 'point'){
-			storeDataToCurrentProcedure(circle,currentShapeCenter,currentShapeName )
-		}
-
-	}
-
+	console.log('updateProtocol()')
 	moveToNextProcedure()
 	highlightStepProtocol(stateProcedure.currentSteps)
-
-	isWaitingForUpdateProtocol = false
 }
 
 function showProtocolUI(target){
