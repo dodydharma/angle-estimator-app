@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>Angle Estimator</title>
+		<title>Angle Measurement Protoco</title>
 		<link rel="stylesheet" href="css/index.css">
 		<link rel="stylesheet" href="css/style.css">
 		<link rel="stylesheet" href="css/colorPick.css">
@@ -26,7 +26,7 @@
 				<input type="file" id="file_input">
 				<div id="checkboxWrapperisFullSize">
 					<input type="checkbox" id="isFullSize" name="isFullSize" />
-					<label for="isFullSize">Show Full Image Size</label>
+					<label >Show Full Image Size</label>
 				</div>
 				<div id="slider">
 					<div id="custom-handle" class="ui-slider-handle"></div>
@@ -48,7 +48,7 @@
 <!--						<div id="buttons4"><button id="freeDraw">General Measurement</button></div>-->
 
 						<div id="selectProtocolWrapper">
-							<label for="selectProtocol"> Protocol</label>
+							<label > Protocol</label>
 							<select name="selectProtocol" id="selectProtocol">
 								<optgroup label="Pre-defined Protocol">
 									<option value="A">Coronal plane alignment measurement</option>
@@ -73,10 +73,10 @@
 		<div id="protocolA" title="PROTOCOL A - Coronal plane alignment measurement protocol." >
 				<form>
 					<fieldset>
-						<button id="goBackwardButton">Undo (<em><small>keyboard: backspace </small></em>)</button>
-						<button id="goForwardButton">Go next (<em><small>keyboard: space </small></em>)</button>
-						<input type="checkbox" id="isAutoForward" name="isAutoForward" />
-						<label for="isAutoForward">Go Next Automatically </label>
+						<button id="goBackwardButtonA">Undo (<em><small>keyboard: backspace </small></em>)</button>
+						<button id="goForwardButtonA">Go next (<em><small>keyboard: space </small></em>)</button>
+						<input type="checkbox" id="isAutoForwardA" name="isAutoForward" />
+						<label >Go Next Automatically </label>
 					</fieldset>
 				</form>
 			<ol>
@@ -88,7 +88,7 @@
 				<li id="procedureA5" >Points C and D are connected to form Line 2 (femoral knee joint orientation line)</li>
 				<li id="procedureA6" >The lateral angle between Lines 1 and 2 is the mechanical lateral distal femoral angle (mLDFA)<br> <strong>(Click or Press Right/Left to switch angle)</strong></li>
 				<li id="procedureA7" >Line 3 (tibial knee joint orientation line) is the line of best fit between the medial and lateral tibial plateaus</li>
-				<li id="procedureA8" >The centre of the tibial interspinous groove is marked as point E</li>
+				<li id="procedureA8" >The centre of the tibial interspinous groove is marked as point E, <br>(<strong>click to edit</strong>)</li>
 				<li id="procedureA9" >The medial limit of the talar dome articular surface is marked as point F</li>
 				<li id="procedureA10" >The lateral limit of the talar dome articular surface is marked as point G</li>
 				<li id="procedureA11" >The midpoint between points F and G is marked as point H</li>
@@ -103,7 +103,7 @@
 					<button id="goBackwardButtonB">Undo (<em><small>keyboard: backspace </small></em>)</button>
 					<button id="goForwardButtonB">Go next (<em><small>keyboard: space </small></em>)</button>
 					<input type="checkbox" id="isAutoForwardB" name="isAutoForward" />
-					<label for="isAutoForwardB">Go Next Automatically </label>
+					<label >Go Next Automatically </label>
 				</fieldset>
 			</form>
 

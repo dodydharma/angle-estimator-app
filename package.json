@@ -1,8 +1,8 @@
 {
   "name": "angle-estimator",
-  "productName": "Angle Estimator",
-  "version": "0.0.1",
-  "description": "Lightweight Angle Estimator from line intersections",
+  "productName": "Angle Measurement Protocol",
+  "version": "0.1.1",
+  "description": "Angle Measurement with Protocol",
   "main": "index.js",
   "license": "MIT",
   "repository": "dodydharma/angle-estimator-app",
@@ -96,7 +96,7 @@
         "AppImage",
         "deb"
       ],
-      "category": "Network;Chat"
+      "category": "Utility;Graphics"
     }
   }
 }

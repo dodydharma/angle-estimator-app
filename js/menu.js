@@ -119,6 +119,17 @@ const macosTemplate = [
 	},
 	{
 		role: 'viewMenu',
+		submenu: [
+			{ role: 'reload' },
+			{ role: 'forceReload' },
+			// { role: 'toggleDevTools' },
+			{ type: 'separator' },
+			{ role: 'resetZoom' },
+			{ role: 'zoomIn' },
+			{ role: 'zoomOut' },
+			{ type: 'separator' },
+			{ role: 'togglefullscreen' }
+		]
 	},
 	{
 		role: 'windowMenu',
@@ -160,6 +171,17 @@ const otherTemplate = [
 	},
 	{
 		role: 'viewMenu',
+		submenu: [
+			{ role: 'reload' },
+			{ role: 'forceReload' },
+			// { role: 'toggleDevTools' },
+			{ type: 'separator' },
+			{ role: 'resetZoom' },
+			{ role: 'zoomIn' },
+			{ role: 'zoomOut' },
+			{ type: 'separator' },
+			{ role: 'togglefullscreen' }
+		]
 	},
 	{
 		role: 'help',

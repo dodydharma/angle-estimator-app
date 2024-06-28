@@ -136,50 +136,59 @@ function activateUndo(){
 	lastIntersectionAngle =  intersectionAngle
 	lastIntersectionLabel = intersectionLabel
 
-	$( "#undo" ).button( "option", "disabled", false );
+	$("#goBackwardButtonA" ).prop('disabled', false);
+	$("#goBackwardButtonB" ).prop('disabled', false);
+
+
 }
 
 function executeUndo(){
 	console.log("execute Undo")
 	if(lastLabel){
 		lastLabel.destroy()
-		lastLabel = null
 	}
 
 	if(lastShape){
 		lastShape.destroy()
-		lastShape = null
 	}
 
 	if(lastShapeCenter){
 		lastShapeCenter.destroy()
-		lastShapeCenter = null
 	}
-
-	if(lastShapeName){
-		lastShapeName = null
-	}
-
-	console.log("intersectionGroup.getChildren()", intersectionGroup.getChildren(),  lastIntersectionArc )
 
 	if(lastIntersectionArc){
 		lastIntersectionArc.destroy()
-		lastIntersectionArc = null
 	}
 	if(lastIntersectionPoint){
 		lastIntersectionPoint.destroy()
-		lastIntersectionPoint = null
 	}
 	if(lastIntersectionAngle){
 		lastIntersectionAngle.destroy()
-		lastIntersectionAngle = null
 	}
 	if(lastIntersectionLabel){
 		lastIntersectionLabel.destroy()
-		lastIntersectionLabel = null
 	}
 
+	clearUndo()
+}
+
+function clearUndo(){
+	console.log("clear Undo")
+	lastLabel = null
+
+	lastShape = null
+
+	lastShapeCenter = null
+	lastShapeName = null
+
+	lastIntersectionArc = null
+	lastIntersectionPoint = null
+	lastIntersectionAngle = null
+	lastIntersectionLabel = null
+
 	$( "#undo" ).button( "option", "disabled", true );
+	$("#goBackwardButtonA" ).prop('disabled', true);
+	$("#goBackwardButtonB" ).prop('disabled', true);
 }
 
 // listen for the file input change event and load the image.
@@ -231,30 +240,33 @@ $('#checkboxWrapperisFullSize :checkbox').change(function() {
 });
 
 let isWaitingForUpdateProtocol = false
-
-
-$( "#goForwardButtonA" ).on( "click", function(event) {
+function goNextStepAfterWaiting()
+{
 	if(isWaitingForUpdateProtocol){
-		console.log("updateProtocol")
+		console.log("goNextStepAfterWaiting")
+		clearUndo()
 		updateProtocol();
 	}
+}
+
+$( "#goForwardButtonA" ).on( "click", function(event) {
+	goNextStepAfterWaiting()
 	event.preventDefault();
 });
 $("#goForwardButtonA" ).prop('disabled', true);
 
 $( "#goForwardButtonB" ).on( "click", function(event) {
-	if(isWaitingForUpdateProtocol){
-		console.log("updateProtocol")
-		updateProtocol();
-	}
+	goNextStepAfterWaiting()
 	event.preventDefault();
 });
 $("#goForwardButtonB" ).prop('disabled', true);
 
 
-$( "#goBackwardButton" ).on( "click", function(event) {
+$( "#goBackwardButtonA" ).on( "click", function(event) {
 	if(isWaitingForUpdateProtocol){
 		executeUndo();
+		$("#goBackwardButtonA" ).prop('disabled', true);
+		$("#goBackwardButtonB" ).prop('disabled', true);
 	}
 	event.preventDefault();
 });
@@ -262,6 +274,9 @@ $("#goBackwardButtonA" ).prop('disabled', true);
 $( "#goBackwardButtonB" ).on( "click", function(event) {
 	if(isWaitingForUpdateProtocol){
 		executeUndo();
+		$("#goBackwardButtonA" ).prop('disabled', true);
+		$("#goBackwardButtonB" ).prop('disabled', true);
+
 	}
 	event.preventDefault();
 });
@@ -296,10 +311,7 @@ window.addEventListener('keydown',function (e) {
 		console.log("keyboard pressed", e.keyCode, "is waiting ", isWaitingForUpdateProtocol)
 
 		if(e.keyCode == 32){ // space
-			if(isWaitingForUpdateProtocol){
-				console.log("updateProtocol")
-				updateProtocol();
-			}
+			goNextStepAfterWaiting()
 		}else if(e.keyCode == 8){ // backspace
 			if(isWaitingForUpdateProtocol){
 				executeUndo();
@@ -369,14 +381,15 @@ function startDrawLine(xF,yF, xT,yT, color, customLabel='', dashed=false){
 		points: [xF, yF, xT, yT],
 		name: currentShapeName,
 		id: 'line-' + (lineGroup.children.length+1),
+		opacity:0.5,
 		dash: dashProp,
 	});
 
 	currentShapeCenter = new Konva.Circle({
-		x: xF,
-		y: yF,
-		radius: 2,
-		stroke: 'yellow',
+		x: xF+(xT-xF)/2,
+		y: yF+(yT-yF)/2,
+		radius: 1,
+		// stroke: 'black',
 		fill: 'black',
 		name: 'center-'+currentShapeName,
 		id:'center-'+currentShapeName,
@@ -384,20 +397,44 @@ function startDrawLine(xF,yF, xT,yT, color, customLabel='', dashed=false){
 	});
 	centerGroup.add(currentShapeCenter);
 
-	currentLabel = new Konva.Text({
-		x: xF+ (xT-xF)/2,
-		y: yF+ (yT-yF)/2,
-		text: currentShapeName,
-		fontSize: 13,
-		fontFamily: 'Calibri',
-		fill: color?color:lineColor,
-		stroke: 'black',
-		strokeWidth: 0.2,
-		align: 'left',
-		id:'label-line-'+(lineGroup.children.length+1)
+	currentLabel  = new Konva.Label({
+		x: xF+(xT-xF)/2,
+		y: yF+(yT-yF)/2,
+		opacity: 0.75,
 	});
-	currentLabel.offsetX(currentLabel.width() / 2);
-	currentLabel.x(currentLabel.x()+ currentLabel.width())
+
+	currentLabel.add(
+		new Konva.Tag({
+			// fill: 'yellow',
+			pointerDirection:  'up',
+			pointerWidth: 15,
+			pointerHeight: 7,
+			lineJoin: 'round',
+			shadowColor: 'black',
+			shadowBlur: 10,
+			shadowOffsetX: 5,
+			shadowOffsetY: 5,
+			shadowOpacity: 0.5,
+			// stroke:'yellow',
+			// strokeWidth:0.5,
+			// dash:[3,4],
+		})
+	);
+
+
+	currentLabel.add(
+		new Konva.Text({
+			text: currentShapeName.replace('line-','          ln-'),
+			fontSize: 13,
+			fontFamily: 'Calibri',
+			fill: color?color:lineColor,
+			stroke: 'black',
+			strokeWidth: 0.2,
+			align: 'left',
+			id:'label-line-'+(lineGroup.children.length+1)
+		})
+	)
+
 	labelGroup.add(currentLabel)
 
 	if(dashed)
@@ -441,11 +478,34 @@ function createCircle(x,y,r, color='red', customLabel=''){
 	});
 	centerGroup.add(currentShapeCenter);
 
-
-	currentLabel = new Konva.Text({
+	currentLabel  = new Konva.Label({
 		x: x,
 		y: y,
-		text: currentShapeName,
+		opacity: 0.75,
+	});
+
+	currentLabel.add(
+		new Konva.Tag({
+			// fill: 'yellow',
+			pointerDirection:  'down',
+			pointerWidth: 15,
+			pointerHeight: 7,
+			lineJoin: 'round',
+			shadowColor: 'black',
+			shadowBlur: 10,
+			shadowOffsetX: 5,
+			shadowOffsetY: 5,
+			shadowOpacity: 0.5,
+			// stroke:'yellow',
+			// strokeWidth:0.5,
+			// dash:[3,4],
+		})
+	);
+
+
+	currentLabel.add(
+		new Konva.Text({
+		text: currentShapeName.replace("point-", '          pt-'),
 		fontSize: 13,
 		fontFamily: 'Calibri',
 		fill: color,
@@ -453,10 +513,11 @@ function createCircle(x,y,r, color='red', customLabel=''){
 		strokeWidth: 0.2,
 		align: 'center',
 		id:'label-'+currentShapeName
-	});
+		})
+	)
 	// currentLabel.offsetX(currentLabel.width() / 2);
-	currentLabel.x(x - currentLabel.width()/2)
-	currentLabel.y(y + currentLabel.height()*2)
+	currentLabel.x(x)
+	currentLabel.y(y)
 	labelGroup.add(currentLabel)
 
 	circle.on('mousedown', (e) => {
@@ -653,11 +714,11 @@ function initialize(){
 			updateCursor()
 			originClickPosition = mouseCurrentPosition;
 
-			console.log('isWaitingForUpdateProtocol :',isWaitingForUpdateProtocol )
 
 
 			var currentAction = runProtocol()
 			console.log("current action ", currentAction)
+			console.log('isWaitingForUpdateProtocol :',isWaitingForUpdateProtocol )
 
 			if(currentAction == null) // Free Draw
 			{
@@ -681,7 +742,6 @@ function initialize(){
 			else if(currentAction == {}) // end of a protocol
 			{
 				console.log("End of protocol")
-
 			}else{
 				if(isWaitingForUpdateProtocol){
 					executeUndo()
@@ -748,9 +808,9 @@ function initialize(){
 				const points = line.points().slice();
 				points[2] = mouseCurrentPosition.x;points[3] = mouseCurrentPosition.y;
 				line.points(points);
-				currentLabel.x(lineLabelX + currentLabel.width())
-				currentLabel.y(lineLabelY + currentLabel.height()/4)
-				currentLabel.text( line.name()+' | '+ mouseDisplacementMagnitude.toFixed(2))
+				currentLabel.x(lineLabelX)
+				currentLabel.y(lineLabelY)
+				// currentLabel.text( line.name()+' | '+ mouseDisplacementMagnitude.toFixed(2))
 
 				currentShapeCenter.x(centerX)
 				currentShapeCenter.y(centerY)
@@ -763,8 +823,8 @@ function initialize(){
 				circle.y(mouseCurrentPosition.y);
 				currentShapeCenter.x(mouseCurrentPosition.x)
 				currentShapeCenter.y(mouseCurrentPosition.y)
-				currentLabel.x(currentShapeCenter.x() + currentLabel.width()/2)
-				currentLabel.y(currentShapeCenter.y() + currentLabel.height()/4)
+				currentLabel.x(currentShapeCenter.x())
+				currentLabel.y(currentShapeCenter.y())
 
 			}
 
@@ -775,6 +835,7 @@ function initialize(){
 
 		stage.on('mouseup', (e) => {
 			if(validateShape() == true){
+				console.log("autoforward", autoForward)
 				if(stateProcedure.procedures.length > 0 && stateProcedure.currentSteps < stateProcedure.procedures.length){
 					storeDataToCurrentProcedure(lastShape,lastShapeCenter,lastShapeName )
 				}
@@ -1146,9 +1207,9 @@ function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizo
 		outerRadius: 50,
 		rotation:rotation,
 		angle: angle,
-		fill: 'yellow',
+		// fill: 'yellow',
 		opacity: 0.5,
-		stroke: 'black',
+		stroke: 'yellow',
 		strokeWidth: 2,
 		dash: [3,4]
 	});
@@ -1199,8 +1260,8 @@ function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizo
 
 	intersectionLabel.add(
 		new Konva.Tag({
-			fill: 'yellow',
-			pointerDirection: yDirection < 0? 'up':'down',
+			// fill: 'yellow',
+			pointerDirection: xDirection < 0? 'left':'right',
 			pointerWidth: 15,
 			pointerHeight: 7,
 			lineJoin: 'round',
@@ -1209,13 +1270,14 @@ function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizo
 			shadowOffsetX: 5,
 			shadowOffsetY: 5,
 			shadowOpacity: 0.5,
-			stroke:'red',
+			stroke:'yellow',
 			strokeWidth:0.5,
 			dash:[2,2],
+			cornerRadius:7
 		})
 	);
 
-	var itxlabel = ' intersection-'+pointIndexInAlphacharacter+'-L('+l1name.replace('line-','')+','+l2name.replace('line-','')+') '
+	var itxlabel = ' its-'+pointIndexInAlphacharacter+'-L('+l1name.replace('line-','')+','+l2name.replace('line-','')+') '
 	if( customlabel != '' )
 		itxlabel = ' '+customlabel+' '
 
@@ -1223,7 +1285,7 @@ function createIntersectionPoint(x,y,r, l1name, l2name, angle, resultant, horizo
 		new Konva.Text({
 			// x: x,
 			// y: y,
-			text: itxlabel,
+			text: itxlabel,//yDirection<0?'\n\n'+itxlabel+'\n\n',
 			fontSize: 14,
 			fontFamily: 'Calibri',
 			fill: color,
@@ -1319,11 +1381,14 @@ function resetProtocol()
 
 function runProtocol()
 {
+	console.log("run protocol ", stateProcedure.currentSteps ,  stateProcedure.procedures.length-1)
 	if(stateProcedure.procedures.length == 0 ){
 		return null
 	}
 
 	if(stateProcedure.currentSteps > stateProcedure.procedures.length-1){
+		removeHighlightStepProtocol(stateProcedure.procedures.length-1)
+		stopWaitingForUpdateProtocol()
 		return {}
 	}else{
 		target = stateProcedure.procedures[stateProcedure.currentSteps]
@@ -1348,9 +1413,19 @@ function highlightStepProtocol(step,isPermanent=false)
 		}
 
 		if(step>0) {
-			$("#" + stateProcedure.procedures[step-1].name).removeClass("highlight");
+			removeHighlightStepProtocol(step-1)
 		}
+	}
 
+	if(step > stateProcedure.procedures.length-1){
+		removeHighlightStepProtocol(stateProcedure.procedures.length-1)
+	}
+}
+
+function removeHighlightStepProtocol(step){
+	if(step>= 0 && step < stateProcedure.procedures.length){
+		console.log('delete highlight on step ', step)
+		$("#" + stateProcedure.procedures[step].name).removeClass("highlight")
 	}
 }
 
@@ -1450,7 +1525,9 @@ function moveToNextProcedure()
 
 	}
 
-	findLineIntersections()
+	if(stateProcedure.procedures.length <= 0){
+		findLineIntersections()
+	}
 
 }
 
@@ -1458,6 +1535,9 @@ function stopWaitingForUpdateProtocol()
 {
 	console.log("stopWaitingForUpdateProtocol() ",isWaitingForUpdateProtocol )
 	isWaitingForUpdateProtocol = false
+	$("#goBackwardButtonA" ).prop('disabled', true);
+	$("#goBackwardButtonB" ).prop('disabled', true);
+
 }
 
 function storeDataToCurrentProcedure(shape, shapeCenter, shapeName, shapeValue=null)
@@ -1486,6 +1566,8 @@ function showProtocolUI(target){
 			$( "#protocolA" ).dialog({position: { my: "right bottom", at: "right bottom", of: window }});
 			$( '#protocolA').parent().css({position:"fixed"});
 
+			autoForward =  $("#isAutoForwardA").is(":checked");
+
 			chooseProtocol(procedureASteps)
 
 			$( "#toolbox" ).hide();
@@ -1503,6 +1585,8 @@ function showProtocolUI(target){
 			$( "#protocolB" ).dialog({position: { my: "right bottom", at: "right bottom", of: window }});
 			$( '#protocolB').parent().css({position:"fixed"});
 
+			autoForward =  $("#isAutoForwardB").is(":checked");
+
 			chooseProtocol(procedureBSteps)
 			$( "#toolbox" ).hide();
 			break;
@@ -1511,6 +1595,7 @@ function showProtocolUI(target){
 			$( "#protocolA").dialog( "close" );
 			$( "#protocolB" ).dialog( "close" );
 			resetProtocol()
+			autoForward = true
 			drawmode = getDrawMode()
 			break;
 	}
