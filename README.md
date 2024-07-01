@@ -1,2 +1,2 @@
-# Angle-Estimator-App
- Cross Platform Desktop Application -  Angle Estimator - built with Electron
+Cross Platform Desktop Application for Windows, Linux, and Mac.
+Skeleton Angle Measurement Protocol Software, developed with JavaScript and ElectronJS
